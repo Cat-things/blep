@@ -88,6 +88,8 @@ def spotify_error(status: int, data: Any, retry_after: str | None = None) -> Spo
         text = f"Spotify is rate limiting me, try again in **{retry_after or 'a few'}** seconds"
     elif status == 403 and reason == "VOLUME_CONTROL_DISALLOW":
         text = "Your current Spotify device doesn't allow changing the volume"
+    elif status == 403 and "not registered" in lowered:
+        text = "This Spotify app is in development mode and your account isn't on its user list, ask the bot owner"
     elif status == 403:
         text = "Spotify didn't allow that right now" + (f" ({message})" if message else "")
     elif status >= 500:
@@ -418,8 +420,10 @@ class Spotify(commands.Cog):
             "code": parse_code(code),
             "redirect_uri": config.SPOTIFY_REDIRECT_URI,
         })
-        status, profile, _ = await self._send(data["access_token"], "GET", "/me")
-        profile = profile if status < 300 and isinstance(profile, dict) else {}
+        status, profile, retry_after = await self._send(data["access_token"], "GET", "/me")
+        if status >= 300:
+            raise spotify_error(status, profile, retry_after)
+        profile = profile if isinstance(profile, dict) else {}
         await self.bot.db.execute(
             """
             INSERT INTO spotify_accounts (user_id, access_token, refresh_token, expires_at, scope,

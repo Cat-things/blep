@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import io
 import logging
+import time
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -51,6 +52,7 @@ MAX_MESSAGE_CHARS = 6000
 MAX_QUEUE = 500
 PER_FLUSH = 50
 AUDIT_DELAY = 1.5
+AUDIT_CACHE_SECONDS = 2.0
 NO_MENTIONS = discord.AllowedMentions.none()
 
 
@@ -134,6 +136,9 @@ class Logging(commands.Cog):
         self.webhooks: dict[int, tuple[int, str]] = {}  # channel_id -> (webhook_id, token)
         self._hooks: dict[int, discord.Webhook] = {}
         self.queues: defaultdict[int, list[LogEntry]] = defaultdict(list)
+        # Audit log pages shared by events that happen together (mass bans, channel nukes...).
+        self._audit_cache: dict[int, tuple[float, list[discord.AuditLogEntry]]] = {}
+        self._audit_locks: defaultdict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 
     async def cog_load(self) -> None:
         for record in await self.bot.db.fetch("SELECT * FROM logs_events"):
@@ -401,17 +406,27 @@ class Logging(commands.Cog):
         if not guild.me.guild_permissions.view_audit_log:
             return None
         await asyncio.sleep(AUDIT_DELAY)  # audit log entries can lag behind gateway events
-        try:
-            async for entry in guild.audit_logs(limit=10):
-                if (
-                    entry.action in actions
-                    and getattr(entry.target, "id", None) == target_id
-                    and discord.utils.utcnow() - entry.created_at < timedelta(seconds=30)
-                ):
-                    return entry
-        except discord.HTTPException:
-            return None
+        for entry in await self._recent_audit(guild):
+            if (
+                entry.action in actions
+                and getattr(entry.target, "id", None) == target_id
+                and discord.utils.utcnow() - entry.created_at < timedelta(seconds=30)
+            ):
+                return entry
         return None
+
+    async def _recent_audit(self, guild: discord.Guild) -> list[discord.AuditLogEntry]:
+        """The latest audit log entries, fetched at most once every couple of seconds per guild."""
+        async with self._audit_locks[guild.id]:
+            cached = self._audit_cache.get(guild.id)
+            if cached and time.monotonic() - cached[0] < AUDIT_CACHE_SECONDS:
+                return cached[1]
+            try:
+                entries = [entry async for entry in guild.audit_logs(limit=25)]
+            except discord.HTTPException:
+                entries = []
+            self._audit_cache[guild.id] = (time.monotonic(), entries)
+            return entries
 
     @staticmethod
     def _add_moderator(embed: discord.Embed, entry: discord.AuditLogEntry | None) -> None:

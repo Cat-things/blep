@@ -284,6 +284,8 @@ class Vanity(commands.Cog):
             return
         advertising = has_vanity(custom_status(member), config.substring)
         awarded = self.awarded[guild.id]
+        if not advertising and member.id not in awarded:
+            return
         can_manage = guild.me.guild_permissions.manage_roles
         roles = self._roles(guild, config) if can_manage else []
         if advertising:

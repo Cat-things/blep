@@ -150,11 +150,13 @@ def system_commands(kind: str, aliases: list[str]) -> tuple[commands.Command, ..
         usage="(channel)",
         extras={"example": "#general"},
     )
+    @checks.has_permissions(manage_guild=True)
     @_as_method(f"{kind}_view")
     async def view(self: Messages, ctx: Context, *, channel: TextChannel) -> None:
         await self.system_view(ctx, kind, channel)
 
     @group.command(name="list", help=f"View every {kind} message in this server")
+    @checks.has_permissions(manage_guild=True)
     @_as_method(f"{kind}_list")
     async def list_(self: Messages, ctx: Context) -> None:
         await self.system_list(ctx, kind)
@@ -522,6 +524,7 @@ class Messages(commands.Cog):
         usage="(channel)",
         extras={"example": "#general"},
     )
+    @checks.has_permissions(manage_guild=True)
     async def timer_view(self, ctx: Context, *, channel: TextChannel) -> None:
         timer = self.timers.get(channel.id)
         if timer is None or timer.guild_id != ctx.guild.id:
@@ -535,6 +538,7 @@ class Messages(commands.Cog):
         await script.send(ctx.channel, allowed_mentions=NO_MENTIONS)
 
     @timer.command(name="list", help="View every auto message in this server")
+    @checks.has_permissions(manage_guild=True)
     async def timer_list(self, ctx: Context) -> None:
         timers = [t for t in self.timers.values() if t.guild_id == ctx.guild.id]
         if not timers:
@@ -649,6 +653,7 @@ class Messages(commands.Cog):
         usage="(channel)",
         extras={"example": "#selfies"},
     )
+    @checks.has_permissions(manage_guild=True)
     async def stickymessage_view(self, ctx: Context, *, channel: TextChannel) -> None:
         sticky = self.sticky.get(channel.id)
         if sticky is None or sticky.guild_id != ctx.guild.id:
@@ -658,6 +663,7 @@ class Messages(commands.Cog):
         await ctx.send(embed=embed)
 
     @stickymessage.command(name="list", help="View every sticky message in this server")
+    @checks.has_permissions(manage_guild=True)
     async def stickymessage_list(self, ctx: Context) -> None:
         stickies = [s for s in self.sticky.values() if s.guild_id == ctx.guild.id]
         if not stickies:
