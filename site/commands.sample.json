@@ -1,0 +1,239 @@
+{
+  "prefix": ",",
+  "modules": {
+    "antinuke": [
+      {
+        "name": "antinuke",
+        "aliases": ["an"],
+        "description": "Protect your server from rogue admins and compromised accounts.",
+        "usage": "",
+        "example": null,
+        "permissions": ["administrator"],
+        "module": "antinuke",
+        "parameters": [],
+        "subcommands": [
+          {
+            "name": "antinuke ban",
+            "aliases": [],
+            "description": "Punish anyone who bans too many members too quickly.",
+            "usage": "(on/off) <threshold> <punishment>",
+            "example": "on 3 ban",
+            "permissions": ["administrator"],
+            "module": "antinuke",
+            "parameters": ["status", "threshold", "punishment"]
+          },
+          {
+            "name": "antinuke botadd",
+            "aliases": ["bot"],
+            "description": "Kick unverified bots added by anyone who isn't whitelisted.",
+            "usage": "(on/off)",
+            "example": "on",
+            "permissions": ["administrator"],
+            "module": "antinuke",
+            "parameters": ["status"]
+          },
+          {
+            "name": "antinuke config",
+            "aliases": ["settings"],
+            "description": "Show every antinuke module and its current threshold.",
+            "usage": "",
+            "example": null,
+            "permissions": ["administrator"],
+            "module": "antinuke",
+            "parameters": []
+          },
+          {
+            "name": "antinuke vanity",
+            "aliases": [],
+            "description": "Revert vanity URL changes and punish whoever made them.",
+            "usage": "(on/off) <punishment>",
+            "example": "on ban",
+            "permissions": ["administrator"],
+            "module": "antinuke",
+            "parameters": ["status", "punishment"]
+          },
+          {
+            "name": "antinuke whitelist",
+            "aliases": ["wl"],
+            "description": "Let trusted members and bots bypass antinuke.",
+            "usage": "(member or bot)",
+            "example": "@blep",
+            "permissions": ["administrator"],
+            "module": "antinuke",
+            "parameters": ["target"],
+            "subcommands": [
+              {
+                "name": "antinuke whitelist list",
+                "aliases": ["view"],
+                "description": "See everyone who bypasses antinuke.",
+                "usage": "",
+                "example": null,
+                "permissions": ["administrator"],
+                "module": "antinuke",
+                "parameters": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "moderation": [
+      {
+        "name": "ban",
+        "aliases": ["b", "yeet"],
+        "description": "Ban a member, optionally deleting their recent messages.",
+        "usage": "(member) <reason>",
+        "example": "@blep spamming",
+        "permissions": ["ban_members"],
+        "module": "moderation",
+        "parameters": ["member", "reason"]
+      },
+      {
+        "name": "jail",
+        "aliases": [],
+        "description": "Strip a member's roles and lock them in the jail channel.",
+        "usage": "(member) <duration> <reason>",
+        "example": "@blep 1h cooling off",
+        "permissions": ["manage_roles", "moderate_members"],
+        "module": "moderation",
+        "parameters": ["member", "duration", "reason"]
+      },
+      {
+        "name": "kick",
+        "aliases": ["k"],
+        "description": "Kick a member from the server.",
+        "usage": "(member) <reason>",
+        "example": "@blep ignoring the rules",
+        "permissions": ["kick_members"],
+        "module": "moderation",
+        "parameters": ["member", "reason"]
+      },
+      {
+        "name": "lockdown",
+        "aliases": ["lockall"],
+        "description": "Lock every channel at once during a raid.",
+        "usage": "<reason>",
+        "example": "raid in progress",
+        "permissions": ["manage_channels"],
+        "module": "moderation",
+        "parameters": ["reason"]
+      },
+      {
+        "name": "purge",
+        "aliases": ["clear", "c"],
+        "description": "Bulk delete messages in this channel.",
+        "usage": "(amount) <member>",
+        "example": "50",
+        "permissions": ["manage_messages"],
+        "module": "moderation",
+        "parameters": ["amount", "member"],
+        "subcommands": [
+          {
+            "name": "purge bots",
+            "aliases": [],
+            "description": "Delete recent messages sent by bots.",
+            "usage": "<amount>",
+            "example": "100",
+            "permissions": ["manage_messages"],
+            "module": "moderation",
+            "parameters": ["amount"]
+          },
+          {
+            "name": "purge contains",
+            "aliases": ["has"],
+            "description": "Delete recent messages that contain a word or phrase.",
+            "usage": "(text) <amount>",
+            "example": "free nitro 200",
+            "permissions": ["manage_messages"],
+            "module": "moderation",
+            "parameters": ["text", "amount"]
+          },
+          {
+            "name": "purge links",
+            "aliases": [],
+            "description": "Delete recent messages that contain links.",
+            "usage": "<amount>",
+            "example": "50",
+            "permissions": ["manage_messages"],
+            "module": "moderation",
+            "parameters": ["amount"]
+          }
+        ]
+      },
+      {
+        "name": "timeout",
+        "aliases": ["mute", "to"],
+        "description": "Time out a member so they can't chat or join voice.",
+        "usage": "(member) (duration) <reason>",
+        "example": "@blep 10m chill",
+        "permissions": ["moderate_members"],
+        "module": "moderation",
+        "parameters": ["member", "duration", "reason"]
+      }
+    ],
+    "voicemaster": [
+      {
+        "name": "voicemaster",
+        "aliases": ["vm", "vc"],
+        "description": "Temporary voice channels that members control themselves.",
+        "usage": "",
+        "example": null,
+        "permissions": [],
+        "module": "voicemaster",
+        "parameters": [],
+        "subcommands": [
+          {
+            "name": "voicemaster claim",
+            "aliases": [],
+            "description": "Take ownership of a channel whose owner left.",
+            "usage": "",
+            "example": null,
+            "permissions": [],
+            "module": "voicemaster",
+            "parameters": []
+          },
+          {
+            "name": "voicemaster ghost",
+            "aliases": ["hide"],
+            "description": "Hide your voice channel from everyone who isn't already in it.",
+            "usage": "",
+            "example": null,
+            "permissions": [],
+            "module": "voicemaster",
+            "parameters": []
+          },
+          {
+            "name": "voicemaster limit",
+            "aliases": [],
+            "description": "Set how many people can join your channel.",
+            "usage": "(limit)",
+            "example": "5",
+            "permissions": [],
+            "module": "voicemaster",
+            "parameters": ["limit"]
+          },
+          {
+            "name": "voicemaster lock",
+            "aliases": [],
+            "description": "Stop anyone new from joining your channel.",
+            "usage": "",
+            "example": null,
+            "permissions": [],
+            "module": "voicemaster",
+            "parameters": []
+          },
+          {
+            "name": "voicemaster setup",
+            "aliases": [],
+            "description": "Create the join-to-create channel and its category.",
+            "usage": "",
+            "example": null,
+            "permissions": ["manage_guild"],
+            "module": "voicemaster",
+            "parameters": []
+          }
+        ]
+      }
+    ]
+  }
+}

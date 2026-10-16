@@ -138,7 +138,41 @@
           {
             "group": "Commands",
             "pages": [
-              "commands/overview"
+              "commands/overview",
+              "commands/antinuke",
+              "commands/antiraid",
+              "commands/automod",
+              "commands/autoresponder",
+              "commands/autorole",
+              "commands/boosterroles",
+              "commands/bumpreminder",
+              "commands/config",
+              "commands/counters",
+              "commands/customize",
+              "commands/embeds",
+              "commands/fortnite",
+              "commands/fun",
+              "commands/giveaway",
+              "commands/honeypot",
+              "commands/information",
+              "commands/lastfm",
+              "commands/levels",
+              "commands/logging",
+              "commands/messages",
+              "commands/misc",
+              "commands/moderation",
+              "commands/music",
+              "commands/reactions",
+              "commands/roblox",
+              "commands/roles",
+              "commands/social",
+              "commands/spotify",
+              "commands/starboard",
+              "commands/tickets",
+              "commands/utility",
+              "commands/vanity",
+              "commands/voicemaster",
+              "commands/webhooks"
             ]
           }
         ]
