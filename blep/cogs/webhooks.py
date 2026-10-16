@@ -6,7 +6,6 @@ webhook id/token are stored in ``webhooks_hooks`` so messages can be sent and ed
 
 from __future__ import annotations
 
-import asyncio
 import re
 import secrets
 import string
@@ -106,7 +105,7 @@ class Webhooks(commands.Cog):
                 if not response.headers.get("Content-Type", "").startswith("image/"):
                     raise UserError("That avatar URL isn't an image")
                 data = await response.content.read(MAX_AVATAR_BYTES + 1)
-        except (aiohttp.ClientError, asyncio.TimeoutError):
+        except (TimeoutError, aiohttp.ClientError):
             raise UserError("I couldn't download that avatar") from None
         if len(data) > MAX_AVATAR_BYTES:
             raise UserError("That avatar is too large, the limit is **8 MB**")

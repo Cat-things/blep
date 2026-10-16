@@ -64,9 +64,6 @@ class MessageLink(NamedTuple):
     channel_id: int | None
     message_id: int
 
-    def jump_url(self, guild_id: int) -> str:
-        return f"https://discord.com/channels/{guild_id}/{self.channel_id or 0}/{self.message_id}"
-
 
 class MessageLinkConverter(commands.Converter[MessageLink]):
     """Parse a message link / ID without fetching the message (it may already be deleted)."""
@@ -208,7 +205,7 @@ class Roles(commands.Cog):
     # ================================================================== reaction roles
     @commands.group(
         name="reactionrole",
-        aliases=["rr", "reactionroles"],
+        aliases=["rr"],
         invoke_without_command=True,
         help="Let members assign themselves roles by reacting to a message",
     )
@@ -367,7 +364,7 @@ class Roles(commands.Cog):
     # ================================================================== button roles
     @commands.group(
         name="buttonrole",
-        aliases=["btnrole", "buttonroles"],
+        aliases=["btnrole"],
         invoke_without_command=True,
         help="Let members assign themselves roles with buttons on Blep's messages",
     )

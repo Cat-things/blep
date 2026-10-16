@@ -247,9 +247,7 @@ class Giveaway(commands.Cog):
         guild = self.bot.get_guild(gw["guild_id"])
         pool = [r["user_id"] for r in rows if guild is not None and guild.get_member(r["user_id"]) is not None]
         if exclude:
-            fresh = [user_id for user_id in pool if user_id not in exclude]
-            if len(fresh) >= amount:
-                pool = fresh
+            pool = [user_id for user_id in pool if user_id not in exclude]
         return _random.sample(pool, min(amount, len(pool)))
 
     async def end(self, gw: dict[str, Any]) -> list[int]:
@@ -409,7 +407,7 @@ class Giveaway(commands.Cog):
 
     @giveaway.command(
         name="reroll",
-        help="Draw new winners for an ended giveaway (defaults to its winner count)",
+        help="Draw new winners for an ended giveaway, never picking a previous winner (defaults to its winner count)",
         usage="(message link) <winners>",
         extras={"example": "https://discord.com/channels/1/2/3 1"},
     )
@@ -424,14 +422,11 @@ class Giveaway(commands.Cog):
         new = await self._draw(gw, amount, exclude=set(gw["winners"]))
         if not new:
             raise UserError("There's nobody left to draw")
-        gw["winners"] = new
-        await self.bot.db.execute("UPDATE giveaways SET winners = $1 WHERE message_id = $2", new, gw["message_id"])
-        count = await self.bot.db.fetchval(
-            "SELECT COUNT(*) FROM giveaway_entries WHERE message_id = $1", gw["message_id"]
+        # Everyone drawn so far is kept so later rerolls never pick the same member twice.
+        gw["winners"] = [*gw["winners"], *new]
+        await self.bot.db.execute(
+            "UPDATE giveaways SET winners = $1 WHERE message_id = $2", gw["winners"], gw["message_id"]
         )
-        self.entries[gw["message_id"]] = count
-        await self.refresh_message(gw)
-        self.entries.pop(gw["message_id"], None)
         await self._announce(gw, new, reroll=True)
         await ctx.approve(f"Rerolled **{len(new)}** winner{'s' if len(new) != 1 else ''} for **{gw['prize']}**")
 

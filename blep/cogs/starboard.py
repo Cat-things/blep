@@ -241,7 +241,7 @@ class Starboard(_BoardCommands, commands.Cog):  # type: ignore[misc, valid-type]
         self.bot = bot
         self.config: dict[tuple[int, str], dict[str, Any]] = {}
         self.ignored: defaultdict[tuple[int, str], set[int]] = defaultdict(set)
-        self.posted: set[int] = set()  # original message ids that currently have a repost
+        self.posted: set[tuple[str, int]] = set()  # (board, original message id) that have a repost
         self.self_reacted: dict[tuple[str, int], bool] = {}
         self.locks: defaultdict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 
@@ -250,7 +250,8 @@ class Starboard(_BoardCommands, commands.Cog):  # type: ignore[misc, valid-type]
             self.config[(r["guild_id"], r["board"])] = dict(r)
         for r in await self.bot.db.fetch("SELECT * FROM starboard_ignored"):
             self.ignored[(r["guild_id"], r["board"])].add(r["target_id"])
-        self.posted = {r["message_id"] for r in await self.bot.db.fetch("SELECT message_id FROM starboard_posts")}
+        rows = await self.bot.db.fetch("SELECT board, message_id FROM starboard_posts")
+        self.posted = {(r["board"], r["message_id"]) for r in rows}
 
     async def cog_check(self, ctx: Context) -> bool:  # type: ignore[override]
         if ctx.guild is None:
@@ -304,7 +305,7 @@ class Starboard(_BoardCommands, commands.Cog):  # type: ignore[misc, valid-type]
         )
         self.config.pop((guild_id, board), None)
         self.ignored.pop((guild_id, board), None)
-        self.posted.difference_update(r["message_id"] for r in rows)
+        self.posted.difference_update((board, r["message_id"]) for r in rows)
 
     # ------------------------------------------------------------------ rendering
     def render(self, board: str, cfg: dict[str, Any], message: discord.Message, count: int) -> dict[str, Any]:
@@ -324,9 +325,9 @@ class Starboard(_BoardCommands, commands.Cog):  # type: ignore[misc, valid-type]
 
         reference = message.reference.resolved if message.reference else None
         if isinstance(reference, discord.Message):
-            snippet = reference.content[:200] or "*attachment or embed*"
-            embed.add_field(name=f"Replying to {reference.author.display_name}",
-                            value=f"[{snippet}]({reference.jump_url})"[:1024], inline=False)
+            snippet = " ".join(reference.content.split())[:200] or "*attachment or embed*"
+            embed.add_field(name=f"Replying to {reference.author.display_name}"[:256],
+                            value=f"{snippet}\n[Jump to reply]({reference.jump_url})", inline=False)
 
         if cfg["show_attachments"]:
             files = list(message.attachments)
@@ -439,7 +440,7 @@ class Starboard(_BoardCommands, commands.Cog):  # type: ignore[misc, valid-type]
                         "post_channel_id = EXCLUDED.post_channel_id, count = EXCLUDED.count",
                         guild.id, board, channel.id, message.id, board_channel.id, post.id, message.author.id, count,
                     )
-                    self.posted.add(message.id)
+                    self.posted.add((board, message.id))
                 elif existing["count"] != count:
                     post_channel = guild.get_channel(existing["post_channel_id"])
                     if isinstance(post_channel, discord.TextChannel):
@@ -459,13 +460,16 @@ class Starboard(_BoardCommands, commands.Cog):  # type: ignore[misc, valid-type]
             "DELETE FROM starboard_posts WHERE guild_id = $1 AND board = $2 AND message_id = $3",
             row["guild_id"], row["board"], row["message_id"],
         )
-        self.posted.discard(row["message_id"])
+        self.posted.discard((row["board"], row["message_id"]))
         channel = guild.get_channel(row["post_channel_id"])
         if isinstance(channel, discord.TextChannel):
             try:
                 await channel.get_partial_message(row["post_id"]).delete()
             except discord.HTTPException:
                 pass
+
+    def _has_post(self, message_id: int) -> bool:
+        return any((board, message_id) in self.posted for board in BOARDS)
 
     def _boards_for(self, guild_id: int, emoji: discord.PartialEmoji | None) -> list[str]:
         boards = []
@@ -508,17 +512,17 @@ class Starboard(_BoardCommands, commands.Cog):  # type: ignore[misc, valid-type]
 
     @commands.Cog.listener()
     async def on_raw_reaction_clear(self, payload: discord.RawReactionClearEvent) -> None:
-        if payload.message_id in self.posted:
+        if self._has_post(payload.message_id):
             await self._dispatch(payload.guild_id, payload.channel_id, payload.message_id, None)
 
     @commands.Cog.listener()
     async def on_raw_reaction_clear_emoji(self, payload: discord.RawReactionClearEmojiEvent) -> None:
-        if payload.message_id in self.posted:
+        if self._has_post(payload.message_id):
             await self._dispatch(payload.guild_id, payload.channel_id, payload.message_id, payload.emoji)
 
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
-        if payload.guild_id is None or payload.message_id not in self.posted:
+        if payload.guild_id is None or not self._has_post(payload.message_id):
             return
         guild = self.bot.get_guild(payload.guild_id)
         rows = await self.bot.db.fetch(

@@ -43,7 +43,7 @@ def allowed_mentions_for(member: discord.Member | discord.abc.User, channel: obj
 
 
 def code_block(text: str) -> str:
-    return "```\n" + text.replace("```", "`​``") + "\n```"
+    return "```\n" + text.replace("```", "`\u200b``") + "\n```"
 
 
 class Embeds(commands.Cog):

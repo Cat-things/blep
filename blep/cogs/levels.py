@@ -230,11 +230,9 @@ class Levels(commands.Cog):
                 to_remove = {role for role in to_remove if rewards.get(role.id, 0) < level}
         if not to_add and not to_remove:
             return False
+        roles = [role for role in (current - to_remove) | to_add if not role.is_default()]
         try:
-            if to_add:
-                await member.add_roles(*to_add, reason=f"Level {level} rewards", atomic=False)
-            if to_remove:
-                await member.remove_roles(*to_remove, reason=f"Level {level} rewards", atomic=False)
+            await member.edit(roles=roles, reason=f"Level {level} rewards")  # one request for the whole change
         except discord.HTTPException as exc:
             log.debug("Couldn't sync level rewards for %s in %s: %s", member.id, member.guild.id, exc)
             return False
@@ -525,9 +523,10 @@ class Levels(commands.Cog):
     async def levels_leaderboard(self, ctx: Context) -> None:
         await self.flush()
         rows = await self.bot.db.fetch(
-            "SELECT user_id, xp FROM levels_members WHERE guild_id = $1 AND xp > 0 ORDER BY xp DESC LIMIT 100",
+            "SELECT user_id, xp FROM levels_members WHERE guild_id = $1 AND xp > 0 ORDER BY xp DESC LIMIT 250",
             ctx.guild.id,
         )
+        rows = [r for r in rows if ctx.guild.get_member(r["user_id"]) is not None][:100]
         if not rows:
             raise UserError("Nobody has earned XP yet")
         entries = [f"<@{r['user_id']}> — **level {level_from_xp(r['xp'])}** ({r['xp']:,} XP)" for r in rows]
