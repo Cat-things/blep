@@ -266,6 +266,13 @@ class BannedUser(commands.Converter[discord.User]):
         raise commands.BadArgument(f"I couldn't find a banned user named **{name}**")
 
 
+# Parameter singletons (converters with bounds / fuzzy voice channel lookup).
+TEMPBAN_DURATION = commands.parameter(converter=Duration(min=timedelta(minutes=1), max=timedelta(days=365)))
+RAID_DURATION = commands.parameter(converter=Duration(max=timedelta(days=30)))
+VOICE_CHANNEL = commands.parameter(converter=VoiceChannel)
+OPTIONAL_VOICE_CHANNEL = commands.parameter(converter=VoiceChannel, default=None)
+
+
 class Moderation(commands.Cog):
     """Punishments, cases, warnings, jail, mutes, purging, lockdown, roles and voice moderation."""
 
@@ -474,15 +481,14 @@ class Moderation(commands.Cog):
         """Record one case per user in a single transaction and post one summary to the mod log."""
         if not users:
             return
-        async with self.bot.db.acquire() as conn:
-            async with conn.transaction():
-                await conn.execute("SELECT pg_advisory_xact_lock($1)", guild.id)
-                start = await conn.fetchval("SELECT COALESCE(MAX(case_id), 0) FROM cases WHERE guild_id = $1", guild.id)
-                rows = [(guild.id, start + index + 1, user.id, moderator.id, action, reason) for index, user in enumerate(users)]
-                await conn.executemany(
-                    "INSERT INTO cases (guild_id, case_id, user_id, moderator_id, action, reason) VALUES ($1, $2, $3, $4, $5, $6)",
-                    rows,
-                )
+        async with self.bot.db.acquire() as conn, conn.transaction():
+            await conn.execute("SELECT pg_advisory_xact_lock($1)", guild.id)
+            start = await conn.fetchval("SELECT COALESCE(MAX(case_id), 0) FROM cases WHERE guild_id = $1", guild.id)
+            rows = [(guild.id, start + index + 1, user.id, moderator.id, action, reason) for index, user in enumerate(users)]
+            await conn.executemany(
+                "INSERT INTO cases (guild_id, case_id, user_id, moderator_id, action, reason) VALUES ($1, $2, $3, $4, $5, $6)",
+                rows,
+            )
         for row, user in zip(rows, users):
             self.bot.dispatch("moderation_case", guild, row[1], user, moderator, action, reason)
         config = await moderation.get_config(self.bot, guild.id)
@@ -807,7 +813,7 @@ class Moderation(commands.Cog):
         self,
         ctx: Context,
         user: User,
-        duration: timedelta = commands.parameter(converter=Duration(min=timedelta(minutes=1), max=timedelta(days=365))),
+        duration: timedelta = TEMPBAN_DURATION,
         *,
         reason: str = DEFAULT_REASON,
     ) -> None:
@@ -1046,7 +1052,11 @@ class Moderation(commands.Cog):
     async def warn(self, ctx: Context, member: Member, *, reason: str = DEFAULT_REASON) -> None:
         guild = ctx.guild
         assert guild is not None and isinstance(ctx.author, discord.Member)
-        moderation.ensure_can_moderate(ctx.author, member, "warn")
+        if member == ctx.author:
+            raise UserError("You can't **warn** yourself")
+        if member.bot:
+            raise UserError("You can't **warn** bots")
+        self._check_author_hierarchy(ctx, member, "warn")
         await self.bot.db.execute(
             "INSERT INTO warnings (guild_id, user_id, moderator_id, reason) VALUES ($1, $2, $3, $4)",
             guild.id, member.id, ctx.author.id, reason,
@@ -1958,7 +1968,7 @@ class Moderation(commands.Cog):
                     data += piece
                     if len(data) > limit:
                         raise UserError(f"The image must be smaller than **{limit // 1024} KB**")
-        except (aiohttp.ClientError, asyncio.TimeoutError):
+        except (aiohttp.ClientError, TimeoutError):
             raise UserError("I couldn't download that image") from None
         return bytes(data)
 
@@ -2264,7 +2274,7 @@ class Moderation(commands.Cog):
     async def raid(
         self,
         ctx: Context,
-        duration: timedelta = commands.parameter(converter=Duration(max=timedelta(days=30))),
+        duration: timedelta = RAID_DURATION,
         action: str = "ban",
         *,
         reason: str = "Raid cleanup",
@@ -2320,7 +2330,7 @@ class Moderation(commands.Cog):
         ctx: Context,
         member: Member,
         *,
-        channel: discord.VoiceChannel | discord.StageChannel | None = commands.parameter(converter=VoiceChannel, default=None),
+        channel: discord.VoiceChannel | discord.StageChannel | None = OPTIONAL_VOICE_CHANNEL,
     ) -> None:
         assert isinstance(ctx.author, discord.Member)
         self._voice_channel(member)
@@ -2338,8 +2348,8 @@ class Moderation(commands.Cog):
     async def moveall(
         self,
         ctx: Context,
-        channel: discord.VoiceChannel | discord.StageChannel = commands.parameter(converter=VoiceChannel),
-        destination: discord.VoiceChannel | discord.StageChannel | None = commands.parameter(converter=VoiceChannel, default=None),
+        channel: discord.VoiceChannel | discord.StageChannel = VOICE_CHANNEL,
+        destination: discord.VoiceChannel | discord.StageChannel | None = OPTIONAL_VOICE_CHANNEL,
     ) -> None:
         assert isinstance(ctx.author, discord.Member)
         if destination is None:

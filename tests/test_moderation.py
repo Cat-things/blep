@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import discord
@@ -104,7 +104,7 @@ class FakeUser:
     global_name = "Jonathan"
     bot = False
     mention = "<@42>"
-    created_at = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    created_at = datetime(2020, 1, 1, tzinfo=UTC)
 
     def __str__(self) -> str:
         return self.name
