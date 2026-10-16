@@ -1,0 +1,5 @@
+discord.py>=2.7,<3
+asyncpg>=0.30
+aiohttp>=3.9
+python-dotenv>=1.0
+wavelink>=3.5,<4
