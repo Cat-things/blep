@@ -114,6 +114,14 @@ def parse_events(event: str | None) -> list[str]:
     return [name]
 
 
+def display_value(value: Any) -> str:
+    if value is None or value == "":
+        return "none"
+    if isinstance(value, bool):
+        return "yes" if value else "no"
+    return truncate(str(value), 480)
+
+
 def channel_ids(channel: Any) -> tuple[int | None, ...]:
     return (
         getattr(channel, "id", None),
@@ -727,7 +735,7 @@ class Logging(commands.Cog):
                                  ("bitrate", "Bitrate"), ("user_limit", "User limit")):
             old, new = getattr(before, attribute, None), getattr(after, attribute, None)
             if old != new:
-                changes.append((label, f"{truncate(str(old), 480) or 'none'} → {truncate(str(new), 480) or 'none'}"))
+                changes.append((label, f"{display_value(old)} → {display_value(new)}"))
         if before.category_id != after.category_id:
             old_category = before.category.name if before.category else "none"
             new_category = after.category.name if after.category else "none"
