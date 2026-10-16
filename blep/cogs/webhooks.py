@@ -104,12 +104,14 @@ class Webhooks(commands.Cog):
                     raise UserError("I couldn't download that avatar")
                 if not response.headers.get("Content-Type", "").startswith("image/"):
                     raise UserError("That avatar URL isn't an image")
-                data = await response.content.read(MAX_AVATAR_BYTES + 1)
+                data = bytearray()
+                async for chunk in response.content.iter_chunked(64 * 1024):
+                    data.extend(chunk)
+                    if len(data) > MAX_AVATAR_BYTES:
+                        raise UserError("That avatar is too large, the limit is **8 MB**")
         except (TimeoutError, aiohttp.ClientError):
             raise UserError("I couldn't download that avatar") from None
-        if len(data) > MAX_AVATAR_BYTES:
-            raise UserError("That avatar is too large, the limit is **8 MB**")
-        return data
+        return bytes(data)
 
     @staticmethod
     def _build_payload(ctx: Context, message: str, extra: list[str]) -> dict[str, Any]:
