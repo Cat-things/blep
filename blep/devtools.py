@@ -14,9 +14,15 @@ from blep.core.help import command_description, command_example, command_usage, 
 
 
 @asynccontextmanager
-async def offline_bot() -> AsyncIterator[Blep]:
-    """Boot the bot without logging in: connects the database, migrates and loads every extension."""
+async def offline_bot(only: list[str] | None = None) -> AsyncIterator[Blep]:
+    """Boot the bot without logging in: connects the database, migrates and loads extensions.
+
+    ``only`` limits loading to the given extensions (``blep.cogs.config`` is always loaded).
+    """
     bot = Blep()
+    if only:
+        wanted = {"blep.cogs.config", *only}
+        bot.discover_extensions = lambda: sorted(wanted)  # type: ignore[method-assign]
     async with bot:
         await bot.setup_hook()
         yield bot

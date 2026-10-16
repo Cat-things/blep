@@ -1,6 +1,7 @@
 """Boot Blep offline and sanity-check every extension and command.
 
-    DATABASE_URL=postgresql://... python scripts/check.py
+    DATABASE_URL=postgresql://... python scripts/check.py                 # everything
+    DATABASE_URL=postgresql://... python scripts/check.py moderation fun  # only these modules
 
 Exits non-zero if an extension fails to load or a command is missing a description.
 """
@@ -23,8 +24,9 @@ from blep.devtools import offline_bot  # noqa: E402
 async def main() -> int:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     failures: list[str] = []
-    async with offline_bot() as bot:
-        expected = Blep.discover_extensions()
+    only = [a if a.startswith("blep.") else f"blep.cogs.{a}" for a in sys.argv[1:]] or None
+    async with offline_bot(only) as bot:
+        expected = sorted({"blep.cogs.config", *only}) if only else Blep.discover_extensions()
         for extension in expected:
             if extension not in bot.extensions:
                 failures.append(f"extension failed to load: {extension}")
