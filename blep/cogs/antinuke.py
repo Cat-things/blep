@@ -433,17 +433,21 @@ class Antinuke(commands.Cog):
         self, guild: discord.Guild, user_id: int, module: str, punishment: str, detail: str,
         recover: Any = None,
     ) -> None:
-        """Punish, run the optional recovery coroutine function, then alert the owner."""
+        """Punish, run the optional recovery coroutine function, then alert the owner.
+
+        Recovery (reverting grants, kicking bots, deleting spam channels) always runs, even when the
+        offender is already being punished for an earlier trigger; the alert is only sent once.
+        """
         result = await self._punish(guild, user_id, punishment, detail)
-        if result is None:
-            return
-        user, _, outcome = result
         recovery = None
         if recover is not None:
             try:
                 recovery = await recover()
             except discord.HTTPException as exc:
                 recovery = f"Recovery failed: {exc.text or exc.status}"
+        if result is None:
+            return
+        user, _, outcome = result
         await self._alert(guild, user, user_id, module, detail, outcome, recovery)
 
     async def _record(
@@ -561,7 +565,8 @@ class Antinuke(commands.Cog):
                     break
             return f"Couldn't kick the bot {mention(added.id)}, remove it manually"
 
-        detail = f"added the bot {added} (`{added.id}`) which isn't whitelisted"
+        bot_name = str(added) if isinstance(added, discord.abc.User) else "a bot"
+        detail = f"added {bot_name} (`{added.id}`) which isn't whitelisted"
         await self._respond(guild, adder_id, "botadd", module.punishment, detail, recover)
 
     async def _on_vanity_change(self, entry: discord.AuditLogEntry, config: GuildConfig) -> None:

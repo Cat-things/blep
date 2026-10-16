@@ -717,6 +717,16 @@ class Utility(commands.Cog):
         self._afk_cooldowns[key] = now
         return False
 
+    def _is_afk_command(self, message: discord.Message) -> bool:
+        """True if the message runs the afk command itself (updating the status shouldn't end it)."""
+        content = message.content.lower()
+        for prefix in self.bot.prefixes_for(message.guild, message.author):
+            if content.startswith(prefix.lower()):
+                invoked = content[len(prefix):].strip().split(" ", 1)[0]
+                if invoked == "afk":
+                    return True
+        return False
+
     @commands.Cog.listener("on_message")
     async def afk_listener(self, message: discord.Message) -> None:
         if not self.afk or message.author.bot or message.guild is None:
@@ -725,10 +735,12 @@ class Utility(commands.Cog):
             return
         author = message.author
         entry = self.afk.get(author.id)
-        if entry is not None and message.created_at > entry.since:
+        if entry is not None and message.created_at > entry.since and not self._is_afk_command(message):
             self.afk.pop(author.id, None)
             try:
-                await self.bot.db.execute("DELETE FROM utility_afk WHERE user_id = $1", author.id)
+                await self.bot.db.execute(
+                    "DELETE FROM utility_afk WHERE user_id = $1 AND since = $2", author.id, entry.since
+                )
             except (asyncpg.PostgresError, OSError):
                 log.exception("Failed to clear AFK for %s", author.id)
             away = human_delta(message.created_at - entry.since)

@@ -28,6 +28,12 @@ class Config(commands.Cog):
     def __init__(self, bot: Blep) -> None:
         self.bot = bot
 
+    async def cog_check(self, ctx: Context) -> bool:  # type: ignore[override]
+        # Group-level guild_only() doesn't cover subcommands, so guard the whole cog here.
+        if ctx.guild is None and ctx.command and ctx.command.qualified_name not in {"prefix", "prefix self"}:
+            raise commands.NoPrivateMessage()
+        return True
+
     # ------------------------------------------------------------------ helpers
     def _resolve_command(self, name: str) -> commands.Command:
         command = self.bot.get_command(name.strip().lower())
