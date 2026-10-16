@@ -38,7 +38,23 @@ MAX_LEVEL = 1000
 DEFAULT_MESSAGE = "GG {user.mention}, you just reached **level {level.new_rank}**!"
 MESSAGE_MODES = {"context", "pm", "dm", "none", "off"}
 
-IgnoreTarget = discord.TextChannel | discord.CategoryChannel | discord.VoiceChannel | discord.Thread | discord.Role
+
+
+class IgnoreTarget(commands.Converter[Any]):
+    """A channel (any type), thread or role: mention, ID or exact name (``#`` and case are ignored)."""
+
+    async def convert(self, ctx: commands.Context, argument: str) -> Any:
+        for converter in (commands.GuildChannelConverter(), commands.ThreadConverter(), commands.RoleConverter()):
+            try:
+                return await converter.convert(ctx, argument)
+            except commands.BadArgument:
+                pass
+        assert ctx.guild is not None
+        name = argument.strip().lstrip("#").lower()
+        for target in (*ctx.guild.channels, *ctx.guild.threads, *ctx.guild.roles):
+            if target.name.lower() == name:
+                return target
+        raise commands.BadArgument(f"I couldn't find a channel or role named **{argument[:50]}**")
 
 
 # --------------------------------------------------------------------------- #

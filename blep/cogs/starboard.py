@@ -21,7 +21,7 @@ from discord.ext import commands
 from blep.config import Colors
 from blep.core import checks
 from blep.core.context import Context
-from blep.core.converters import Bool, Color, Emoji, TextChannel
+from blep.core.converters import Bool, Color, Emoji, Member, TextChannel
 from blep.core.errors import UserError
 
 if TYPE_CHECKING:
@@ -36,7 +36,26 @@ BOARDS: dict[str, dict[str, Any]] = {
 DEFAULT_THRESHOLD = 3
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 
-IgnoreTarget = discord.TextChannel | discord.CategoryChannel | discord.Thread | discord.Member | discord.Role
+
+
+class IgnoreTarget(commands.Converter[Any]):
+    """A channel, thread, role or member: mention, ID or exact name (``#`` and case are ignored)."""
+
+    async def convert(self, ctx: commands.Context, argument: str) -> Any:
+        for converter in (commands.GuildChannelConverter(), commands.ThreadConverter(), commands.RoleConverter()):
+            try:
+                return await converter.convert(ctx, argument)
+            except commands.BadArgument:
+                pass
+        assert ctx.guild is not None
+        name = argument.strip().lstrip("#").lower()
+        for target in (*ctx.guild.channels, *ctx.guild.threads, *ctx.guild.roles):
+            if target.name.lower() == name:
+                return target
+        try:
+            return await Member().convert(ctx, argument)
+        except commands.BadArgument:
+            raise commands.BadArgument(f"I couldn't find a channel, role or member named **{argument[:50]}**") from None
 
 
 def emoji_key(emoji: str | discord.PartialEmoji | discord.Emoji) -> str:

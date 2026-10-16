@@ -389,17 +389,13 @@ class VoiceMaster(commands.Cog):
         if not isinstance(category, discord.CategoryChannel):
             category = None
 
-        overwrites: dict[Any, discord.PermissionOverwrite] = dict(category.overwrites) if category else {}
-        owner_overwrite = overwrites.get(member, discord.PermissionOverwrite())
-        owner_overwrite.update(**grantable(guild.me, OWNER_PERMISSIONS))
-        overwrites[member] = owner_overwrite
-
         bitrate = min((config.default_bitrate or DEFAULT_BITRATE) * 1000, int(guild.bitrate_limit))
+        # No overwrites are passed so Discord syncs the channel with its category's permissions
+        # (copying them ourselves fails when the category grants something the bot doesn't hold).
         options: dict[str, Any] = {
             "name": render_channel_name(config.default_name, member),
             "category": category,
             "bitrate": bitrate,
-            "overwrites": overwrites,
             "reason": f"VoiceMaster: created for {member} ({member.id})",
         }
         if config.default_region:
@@ -413,6 +409,12 @@ class VoiceMaster(commands.Cog):
             channel = await guild.create_voice_channel(**options)
 
         await self._remember(channel, member)
+        owner_overwrite = channel.overwrites_for(member)
+        owner_overwrite.update(**grantable(guild.me, OWNER_PERMISSIONS))
+        try:
+            await channel.set_permissions(member, overwrite=owner_overwrite, reason="VoiceMaster: channel owner")
+        except discord.HTTPException:
+            pass  # ownership is tracked by Blep, the owner commands still work
         try:
             await member.move_to(channel, reason="VoiceMaster: moving into their new channel")
         except discord.HTTPException:
@@ -624,14 +626,11 @@ class VoiceMaster(commands.Cog):
         if self.is_music(channel):
             await self._set_target(channel, everyone, reason, speak=self._baseline(channel, "speak"))
             return f"Disabled music mode, everyone in {channel.mention} can speak again"
-        overwrites = dict(channel.overwrites)
-        for target, overwrite in list(overwrites.items()):
-            if target == everyone:
-                overwrite.speak = False
-            elif target.id == temp.owner_id or overwrite.connect is True:
-                overwrite.speak = True
-        overwrites.setdefault(everyone, discord.PermissionOverwrite(speak=False))
-        await channel.edit(overwrites=overwrites, reason=reason)
+        # The owner and permitted members/roles keep their voice, everyone else is muted.
+        for target, overwrite in channel.overwrites.items():
+            if target != everyone and (target.id == temp.owner_id or overwrite.connect is True) and not overwrite.speak:
+                await self._set_target(channel, target, reason, speak=True)
+        await self._set_target(channel, everyone, reason, speak=False)
         return f"Enabled music mode, only you and permitted members can speak in {channel.mention}"
 
     async def set_role(self, member: discord.Member, role: discord.Role | None) -> str:
