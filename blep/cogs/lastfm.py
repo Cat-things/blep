@@ -844,18 +844,23 @@ class LastFM(commands.Cog):
         rows = rows[:WHOKNOWS_LIMIT]
 
         semaphore = asyncio.Semaphore(WHOKNOWS_CONCURRENCY)
+        errors: list[LastFMError] = []
 
         async def lookup(row: asyncpg.Record) -> tuple[discord.Member, str, int] | None:
             async with semaphore:
                 try:
                     result = await self.artist_plays(row["username"], canonical.name)
-                except LastFMError:
+                except LastFMError as exc:
+                    if exc.code != 6:  # a renamed/deleted Last.fm account is just skipped
+                        errors.append(exc)
                     return None
             if result.plays <= 0:
                 return None
             return members[row["user_id"]], row["username"], result.plays
 
         found = [r for r in await asyncio.gather(*(lookup(row) for row in rows)) if r is not None]
+        if not found and errors:
+            raise errors[0]
         if not found:
             artist = discord.utils.escape_markdown(canonical.name)
             raise UserError(f"Nobody in this server has listened to **{artist}**")

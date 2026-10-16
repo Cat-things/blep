@@ -18,7 +18,7 @@ import re
 import time
 import xml.etree.ElementTree as ET
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote

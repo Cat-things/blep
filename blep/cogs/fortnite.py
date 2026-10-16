@@ -334,7 +334,7 @@ class Fortnite(commands.Cog):
         try:
             async with self.bot.session.get(f"{API_URL}{path}", params=params, headers=headers,
                                             timeout=TIMEOUT) as response:
-                if response.status == 404:
+                if response.status in (400, 404):  # 400: the search query was rejected (e.g. too short)
                     return None
                 if response.status == 429:
                     raise FortniteError("fortnite-api.com is rate limiting me, try again in a minute")
