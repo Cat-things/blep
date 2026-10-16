@@ -185,8 +185,8 @@ def youtube_targets(text: str) -> tuple[str | None, list[str]]:
             return None, [f"https://www.youtube.com/{parts[0]}"]
         if parts[0].lower() in {"c", "user"} and len(parts) > 1:
             return None, [f"https://www.youtube.com/{parts[0]}/{parts[1]}"]
-        return None, [f"https://www.youtube.com/{'/'.join(parts[:2]) if parts[0] == 'watch' else parts[0]}"
-                      + (f"?{text.split('?', 1)[1]}" if parts[0] == "watch" and "?" in text else "")]
+        # Vanity URLs, video links ... the page still names the channel it belongs to.
+        return None, [text if text.lower().startswith("http") else f"https://{text}"]
     handle = text.lstrip("@")
     if not YT_HANDLE_RE.match(handle):
         return None, []
@@ -452,21 +452,26 @@ class Social(commands.Cog):
         return bool(config.TWITCH_CLIENT_ID and config.TWITCH_CLIENT_SECRET)
 
     async def twitch_token(self, *, force: bool = False) -> str:
+        """App access token (client credentials flow), refreshed shortly before it expires."""
         async with self._twitch_lock:
             if not force and self._twitch_token and self._twitch_expires > time.monotonic() + 60:
                 return self._twitch_token
-            async with self.bot.session.post(
-                "https://id.twitch.tv/oauth2/token",
-                params={
-                    "client_id": config.TWITCH_CLIENT_ID,
-                    "client_secret": config.TWITCH_CLIENT_SECRET,
-                    "grant_type": "client_credentials",
-                },
-                timeout=TIMEOUT,
-            ) as response:
-                data = await response.json(content_type=None)
-                if response.status >= 400 or not isinstance(data, dict) or "access_token" not in data:
-                    raise UserError("Twitch rejected the configured client ID/secret")
+            try:
+                async with self.bot.session.post(
+                    "https://id.twitch.tv/oauth2/token",
+                    params={
+                        "client_id": config.TWITCH_CLIENT_ID,
+                        "client_secret": config.TWITCH_CLIENT_SECRET,
+                        "grant_type": "client_credentials",
+                    },
+                    timeout=TIMEOUT,
+                ) as response:
+                    data = await response.json(content_type=None)
+                    status = response.status
+            except (aiohttp.ClientError, asyncio.TimeoutError, ValueError) as exc:
+                raise UserError("Twitch didn't respond, try again later") from exc
+            if status >= 400 or not isinstance(data, dict) or "access_token" not in data:
+                raise UserError("Twitch rejected the configured client ID/secret")
             self._twitch_token = str(data["access_token"])
             self._twitch_expires = time.monotonic() + float(data.get("expires_in") or 3600)
             return self._twitch_token
@@ -530,12 +535,15 @@ class Social(commands.Cog):
         if not isinstance(about, dict) or about.get("kind") != "t5":
             raise UserError(f"**r/{name}** doesn't exist")
         data = about.get("data") or {}
-        posts = [c.get("data") or {} for c in ((listing or {}).get("data") or {}).get("children") or []]
+        seed = None  # if the listing failed, the first poll seeds instead (never announce a backlog)
+        if isinstance(listing, dict):
+            posts = [c.get("data") or {} for c in (listing.get("data") or {}).get("children") or []]
+            seed = [str(p["name"]) for p in posts if p.get("name")]
         return Account(
             id=str(data.get("display_name") or name).lower(),
             name=str(data.get("display_name") or name),
             nsfw=bool(data.get("over18")),
-            seed=[str(p["name"]) for p in posts if p.get("name")],
+            seed=seed,
         )
 
     # ------------------------------------------------------------------ Kick API
@@ -948,12 +956,22 @@ class Social(commands.Cog):
             note += "\n-# NSFW posts will be skipped because the channel isn't age-restricted"
         await ctx.approve(f"Now posting new {info.thing} from {name} in {channel.mention}{note}")
 
+    async def find_feed(self, feeds: list[asyncpg.Record], platform: str, text: str) -> asyncpg.Record | None:
+        feed = self.match_feed(feeds, platform, text)
+        if feed is None and platform == "youtube" and feeds:
+            try:  # e.g. a @handle that differs from the channel's display name
+                account = await self.resolve_youtube(text)
+            except UserError:
+                return None
+            feed = next((f for f in feeds if f["account_id"] == account.id), None)
+        return feed
+
     async def remove_feed(self, ctx: Context, platform: str, channel: discord.TextChannel, text: str) -> None:
         feeds = await self.bot.db.fetch(
             "SELECT * FROM social_feeds WHERE guild_id = $1 AND platform = $2 AND channel_id = $3",
             ctx.guild.id, platform, channel.id,
         )
-        feed = self.match_feed(feeds, platform, text)
+        feed = await self.find_feed(feeds, platform, text)
         if feed is None:
             raise UserError(f"**{discord.utils.escape_markdown(text[:60])}** isn't being posted in {channel.mention}")
         await self.bot.db.execute("DELETE FROM social_feeds WHERE id = $1", feed["id"])
@@ -966,7 +984,7 @@ class Social(commands.Cog):
         feeds = await self.bot.db.fetch(
             "SELECT * FROM social_feeds WHERE guild_id = $1 AND platform = $2", ctx.guild.id, platform
         )
-        feed = self.match_feed(feeds, platform, text)
+        feed = await self.find_feed(feeds, platform, text)
         if feed is None:
             raise UserError(f"**{discord.utils.escape_markdown(text[:60])}** isn't being posted in this server, "
                             f"add it with `{ctx.clean_prefix}{ctx.command.parent} add`")
