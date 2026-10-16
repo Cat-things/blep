@@ -1170,6 +1170,17 @@ class Tickets(commands.Cog):
         except discord.HTTPException:
             pass
 
+    @staticmethod
+    async def _apply_overwrites(
+        channel: discord.TextChannel, changes: dict[Any, discord.PermissionOverwrite | None], reason: str
+    ) -> None:
+        """Update only the overwrites that change (re-sending every overwrite can fail when the
+        channel holds permissions the bot doesn't have). ``None`` removes an overwrite."""
+        for target, overwrite in changes.items():
+            if overwrite is None and target not in channel.overwrites:
+                continue
+            await channel.set_permissions(target, overwrite=overwrite, reason=reason)
+
     async def _log(self, guild: discord.Guild, panel: Record | None, embed: discord.Embed,
                    file: discord.File | None = None) -> None:
         if panel is None or not panel["log_channel_id"]:
@@ -1210,19 +1221,19 @@ class Tickets(commands.Cog):
             panel, option = await self._context(ticket)
             self.require_claim(actor, ticket, panel, option)
             guild = channel.guild
-            overwrites = dict(channel.overwrites)
+            changes: dict[Any, discord.PermissionOverwrite | None] = {}
             option_roles = [guild.get_role(r) for r in (option["support_roles"] if option else [])]
             for role in filter(None, option_roles):
                 if option is not None and option["keep_staff"]:
-                    overwrite = overwrites.get(role, discord.PermissionOverwrite())
+                    overwrite = channel.overwrites_for(role)
                     overwrite.update(view_channel=True, send_messages=False)
-                    overwrites[role] = overwrite
+                    changes[role] = overwrite
                 else:
-                    overwrites.pop(role, None)
-            overwrite = overwrites.get(actor, discord.PermissionOverwrite())
+                    changes[role] = None
+            overwrite = channel.overwrites_for(actor)
             overwrite.update(**_grantable(guild.me, MEMBER_ACCESS))
-            overwrites[actor] = overwrite
-            await channel.edit(overwrites=overwrites, reason=f"Ticket claimed by {actor} ({actor.id})")
+            changes[actor] = overwrite
+            await self._apply_overwrites(channel, changes, f"Ticket claimed by {actor} ({actor.id})")
             ticket = await self.bot.db.fetchrow(
                 "UPDATE tickets_entries SET claimer_id = $2, claimed_at = NOW(), claim_reason = $3 "
                 "WHERE id = $1 RETURNING *",
@@ -1243,16 +1254,16 @@ class Tickets(commands.Cog):
             if not ticket["claimer_id"]:
                 raise UserError("This ticket isn't claimed")
             guild = channel.guild
-            overwrites = dict(channel.overwrites)
+            changes: dict[Any, discord.PermissionOverwrite | None] = {}
             access = _grantable(guild.me, MEMBER_ACCESS)
             if ticket["status"] == "open":
                 for role_id in self.support_role_ids(guild.id, option):
                     if role := guild.get_role(role_id):
-                        overwrites[role] = discord.PermissionOverwrite(**access)
+                        changes[role] = discord.PermissionOverwrite(**access)
             claimer = guild.get_member(ticket["claimer_id"])
-            if claimer is not None and claimer.id not in ticket["allowed"] and not self.has_support(claimer, option):
-                overwrites.pop(claimer, None)
-            await channel.edit(overwrites=overwrites, reason=f"Ticket unclaimed by {actor} ({actor.id})")
+            if claimer is not None and claimer.id not in ticket["allowed"]:
+                changes[claimer] = None
+            await self._apply_overwrites(channel, changes, f"Ticket unclaimed by {actor} ({actor.id})")
             ticket = await self.bot.db.fetchrow(
                 "UPDATE tickets_entries SET claimer_id = NULL, claimed_at = NULL, claim_reason = NULL "
                 "WHERE id = $1 RETURNING *",
@@ -1274,16 +1285,16 @@ class Tickets(commands.Cog):
             if ticket["status"] != "open":
                 raise UserError("This ticket is already closed")
             guild = channel.guild
-            overwrites = dict(channel.overwrites)
+            changes: dict[Any, discord.PermissionOverwrite | None] = {}
             hidden = [ticket["creator_id"], *(t for t in ticket["allowed"] if t != ticket["claimer_id"])]
             for target_id in hidden:
                 target = guild.get_member(target_id) or guild.get_role(target_id)
                 if target is None:
                     continue
-                overwrite = overwrites.get(target, discord.PermissionOverwrite())
+                overwrite = channel.overwrites_for(target)
                 overwrite.update(view_channel=False, send_messages=False)
-                overwrites[target] = overwrite
-            await channel.edit(overwrites=overwrites, reason=f"Ticket closed by {actor} ({actor.id})")
+                changes[target] = overwrite
+            await self._apply_overwrites(channel, changes, f"Ticket closed by {actor} ({actor.id})")
             ticket = await self.bot.db.fetchrow(
                 "UPDATE tickets_entries SET status = 'closed', closer_id = $2, close_reason = $3, closed_at = NOW() "
                 "WHERE id = $1 RETURNING *",
@@ -1308,13 +1319,13 @@ class Tickets(commands.Cog):
             if ticket["status"] != "closed":
                 raise UserError("This ticket isn't closed")
             guild = channel.guild
-            overwrites = dict(channel.overwrites)
             access = _grantable(guild.me, MEMBER_ACCESS)
+            changes: dict[Any, discord.PermissionOverwrite | None] = {}
             for target_id in (ticket["creator_id"], *ticket["allowed"]):
                 target = guild.get_member(target_id) or guild.get_role(target_id)
                 if target is not None:
-                    overwrites[target] = discord.PermissionOverwrite(**access)
-            await channel.edit(overwrites=overwrites, reason=f"Ticket reopened by {actor} ({actor.id})")
+                    changes[target] = discord.PermissionOverwrite(**access)
+            await self._apply_overwrites(channel, changes, f"Ticket reopened by {actor} ({actor.id})")
             closed_message_id = ticket["closed_message_id"]
             ticket = await self.bot.db.fetchrow(
                 "UPDATE tickets_entries SET status = 'open', reopener_id = $2, reopen_reason = $3, reopened_at = NOW(), "
