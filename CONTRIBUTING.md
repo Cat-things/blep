@@ -23,7 +23,7 @@ blep/
   cogs/             one file per module, auto-loaded
   schema/           *.sql files, executed in order on every boot (must be idempotent)
 scripts/            check.py (offline sanity check), export_commands.py
-docs/               Mintlify documentation (docs.blep.wtf)
+docs/               Mintlify documentation (blep.wtf/docs)
 ```
 
 ## Writing a module

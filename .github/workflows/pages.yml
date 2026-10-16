@@ -1,0 +1,91 @@
+name: Pages
+
+# Builds blep.wtf: the homepage (site/) at the root and the docs (docs/) under /docs,
+# with the command reference regenerated from the bot's code, then deploys it to GitHub Pages.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: blep
+          POSTGRES_PASSWORD: blep
+          POSTGRES_DB: blep
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U blep"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://blep:blep@localhost:5432/blep
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install bot dependencies
+        run: pip install -r requirements.txt
+
+      # Boots the bot offline (no Discord login) and writes docs/commands/*.mdx,
+      # site/commands.json and the Commands tab in docs/docs.json.
+      - name: Generate the command reference
+        run: python scripts/generate_docs.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/docs-site/package-lock.json
+
+      - name: Install the docs builder
+        run: npm ci
+        working-directory: tools/docs-site
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      # base_path is "" with a custom domain (blep.wtf) and "/<repo>" on <user>.github.io.
+      - name: Build the homepage and docs
+        run: >-
+          node tools/docs-site/build.mjs
+          --docs docs
+          --site site
+          --out _site
+          --base "${{ steps.pages.outputs.base_path }}"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -103,7 +103,8 @@ def render_command(command: dict[str, Any], level: int) -> str:
         rows.append(("Permissions", ", ".join(code(p.replace("_", " ")) for p in command["permissions"])))
     lines.append("| | |")
     lines.append("| --- | --- |")
-    lines.extend(f"| **{name}** | {value} |" for name, value in rows)
+    # GFM splits cells on "|" even inside code spans, so escape it.
+    lines.extend(f"| **{name}** | {value.replace('|', chr(92) + '|')} |" for name, value in rows)
     lines.append("")
     return "\n".join(lines)
 

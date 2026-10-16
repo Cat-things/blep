@@ -222,3 +222,5 @@ __marimo__/
 # Blep
 .venv/
 *.sqlite3
+_site/
+node_modules/

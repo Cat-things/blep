@@ -24,7 +24,7 @@ Everything lives in `config.js`:
 window.BLEP_CONFIG = {
   clientId: "YOUR_CLIENT_ID",            // Developer Portal > your app > General Information > Application ID
   support: "https://discord.gg/blep",
-  docs: "https://docs.blep.wtf",
+  docs: "https://blep.wtf/docs",
   github: "https://github.com/cat-things/blep",
 };
 ```
@@ -106,9 +106,11 @@ No build command; the output directory is `site`.
   build output directory `site`.
 - **Vercel**: import the repo, framework preset *Other*, root directory `site`, no build command.
 - **Netlify**: base directory `site`, publish directory `site`, no build command.
-- **GitHub Pages**: publish the `site/` folder (for example with `actions/upload-pages-artifact` using
-  `path: site`) and use a custom domain. The site expects to live at the domain root because `404.html`
-  uses root-absolute paths.
+- **GitHub Pages (what blep.wtf uses)**: `.github/workflows/pages.yml` builds this folder together
+  with the docs (served at `/docs`) and deploys both on every push to `main`. Enable it once with
+  **Settings → Pages → Source: GitHub Actions** and add the `blep.wtf` custom domain there. Without a
+  custom domain it also works from `<owner>.github.io/<repo>/`; the build rewrites `404.html`'s
+  root-absolute paths for that base path. See `docs/README.md`.
 
 All of these serve `404.html` for unknown paths and `dir/index.html` for `/dir` and `/dir/`, which is what
 `/invite`, `/discord`, `/commands` and `/spotify/callback` rely on. Pages use relative links that resolve

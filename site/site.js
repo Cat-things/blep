@@ -5,7 +5,7 @@
   var defaults = {
     clientId: "",
     support: "https://discord.gg/blep",
-    docs: "https://docs.blep.wtf",
+    docs: "https://blep.wtf/docs",
     github: "https://github.com/cat-things/blep",
     permissions: "8",
   };

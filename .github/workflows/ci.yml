@@ -33,3 +33,13 @@ jobs:
       - run: python -m compileall -q blep scripts
       - run: python -m pytest -q
       - run: python scripts/check.py
+      # Make sure the docs still build (catches broken MDX before it reaches Pages).
+      - run: python scripts/generate_docs.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/docs-site/package-lock.json
+      - run: npm ci
+        working-directory: tools/docs-site
+      - run: node tools/docs-site/build.mjs --docs docs --site site --out _site

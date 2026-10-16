@@ -417,7 +417,7 @@ def format_clock(moment: datetime) -> str:
 
 
 # =========================================================================== #
-# Translation languages (https://docs.blep.wtf/resources/languages)
+# Translation languages (https://blep.wtf/docs/resources/languages)
 # =========================================================================== #
 LANGUAGES: dict[str, str] = {
     "af": "Afrikaans", "sq": "Albanian", "am": "Amharic", "ar": "Arabic", "hy": "Armenian", "az": "Azerbaijani",

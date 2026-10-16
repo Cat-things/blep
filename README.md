@@ -11,7 +11,7 @@
 messages, reaction roles, tickets, VoiceMaster, levels, music, Last.fm and more, with no paid tiers.
 
 - Website: [blep.wtf](https://blep.wtf)
-- Docs: [docs.blep.wtf](https://docs.blep.wtf) (source in [`docs/`](docs))
+- Docs: [blep.wtf/docs](https://blep.wtf/docs) (source in [`docs/`](docs))
 - Default prefixes: `,` **and** `;`
 
 ## Features

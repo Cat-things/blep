@@ -38,7 +38,7 @@ DEFAULT_PREFIXES: tuple[str, ...] = tuple(_env("DEFAULT_PREFIXES", ", ;").split(
 # --------------------------------------------------------------------------- #
 NAME = "blep"
 WEBSITE = _env("BLEP_WEBSITE", "https://blep.wtf")
-DOCS = _env("BLEP_DOCS", "https://docs.blep.wtf")
+DOCS = _env("BLEP_DOCS", "https://blep.wtf/docs")
 SUPPORT = _env("BLEP_SUPPORT", "https://discord.gg/blep")
 INVITE = _env("BLEP_INVITE", f"{WEBSITE}/invite")
 COMMANDS_URL = f"{WEBSITE}/commands"

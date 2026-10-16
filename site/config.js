@@ -13,6 +13,6 @@
 window.BLEP_CONFIG = {
   clientId: "YOUR_CLIENT_ID",
   support: "https://discord.gg/blep",
-  docs: "https://docs.blep.wtf",
+  docs: "https://blep.wtf/docs",
   github: "https://github.com/cat-things/blep",
 };

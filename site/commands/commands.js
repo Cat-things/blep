@@ -54,7 +54,7 @@
   }
 
   function docsUrl() {
-    return (window.Blep && window.Blep.config.docs) || "https://docs.blep.wtf";
+    return (window.Blep && window.Blep.config.docs) || "https://blep.wtf/docs";
   }
 
   function supportUrl() {
