@@ -38,6 +38,11 @@
   var status = document.getElementById("cb-copy-status");
   box.value = code;
   show("cb-success");
+  // Grow the box to fit the code where field-sizing: content isn't supported.
+  if (!(window.CSS && CSS.supports("field-sizing", "content"))) {
+    box.style.blockSize = "auto";
+    box.style.blockSize = box.scrollHeight + 2 + "px";
+  }
 
   box.addEventListener("focus", function () {
     box.select();

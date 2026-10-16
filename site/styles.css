@@ -1377,6 +1377,7 @@ kbd {
 
 .center-card {
   inline-size: min(100%, 38rem);
+  margin-inline: auto;
   padding: clamp(1.5rem, 5vw, 2.5rem);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -1408,7 +1409,8 @@ kbd {
   margin-block-start: 1.75rem;
 }
 
-.big-code {
+.center-card .big-code {
+  margin-block: 0 0.5rem;
   font-size: clamp(4rem, 2rem + 10vw, 7rem);
   font-weight: 900;
   letter-spacing: -0.06em;
@@ -1445,6 +1447,8 @@ kbd {
 .code-field textarea {
   flex: 1;
   min-inline-size: 0;
+  max-block-size: 10rem;
+  field-sizing: content;
   padding: 0.5rem 0.6rem;
   border: 0;
   border-radius: 0.5rem;
@@ -1554,6 +1558,16 @@ kbd {
 
 .cmd-search:focus-within kbd {
   display: none;
+}
+
+@media (max-width: 47.99rem), (pointer: coarse) {
+  .cmd-search kbd {
+    display: none;
+  }
+
+  .cmd-search input {
+    padding-inline-end: 1rem;
+  }
 }
 
 .chips {
@@ -1697,7 +1711,7 @@ kbd {
 .cmd > summary {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: start;
   gap: 0.25rem 1rem;
   padding: 0.85rem 1.1rem;
   cursor: pointer;
@@ -1714,6 +1728,7 @@ kbd {
   block-size: 0.5rem;
   border-inline-end: 2px solid var(--muted);
   border-block-end: 2px solid var(--muted);
+  margin-block-start: 0.55rem;
   rotate: -45deg;
   transition: rotate 0.15s ease;
 }
@@ -1744,6 +1759,7 @@ kbd {
 }
 
 .cmd-badges {
+  margin-block-start: 0.2rem;
   display: flex;
   flex-wrap: wrap;
   justify-content: end;
