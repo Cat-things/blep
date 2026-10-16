@@ -1,0 +1,181 @@
+---
+title: "Variables"
+description: "Every variable you can use in messages and embed scripts."
+icon: "signature"
+---
+
+Variables work in any command that stores a message or an embed script (`welcome`, `goodbye`,
+`boost`, `autoresponder`, `levels message`, `invoke` ...). Unknown variables are left as they are.
+
+## Functions
+
+Wrap a variable in a function to transform it:
+
+| Function | Output | Example |
+| -------- | ------ | ------- |
+| `lower(...)` | lowercase | `{lower(user.name)}` |
+| `upper(...)` | UPPERCASE | `{upper(guild.name)}` |
+| `title(...)` | Title Case | `{title(channel.name)}` |
+| `proper(...)` | Number with commas | `{proper(guild.count)}` |
+| `len(...)` | Length of the value | `{len(user.name)}` |
+
+<Tabs>
+  <Tab title="User">
+    | Variable | Output |
+    | -------- | ------ |
+    | `{user}` | The user's name |
+    | `{user.id}` | The user's ID |
+    | `{user.mention}` | Mentions the user |
+    | `{user.name}` | The user's username |
+    | `{user.display_name}` | The user's display name in the server |
+    | `{user.global_name}` | The user's global display name |
+    | `{user.nickname}` | The user's server nickname (or display name) |
+    | `{user.tag}` | The user's discriminator |
+    | `{user.avatar}` | The user's avatar URL |
+    | `{user.guild_avatar}` | The user's server avatar URL (`N/A` if none) |
+    | `{user.display_avatar}` | Server avatar if set, otherwise the avatar |
+    | `{user.created_at}` | Account creation date (UTC) |
+    | `{user.created_at_timestamp}` | Account creation date (unix) |
+    | `{user.joined_at}` | Server join date (UTC) |
+    | `{user.joined_at_timestamp}` | Server join date (unix) |
+    | `{user.join_position}` | Join position, e.g. `42` |
+    | `{user.join_position_suffix}` | Join position with suffix, e.g. `42nd` |
+    | `{user.boost}` | `Yes` / `No` if boosting the server |
+    | `{user.boost_since}` | When they started boosting |
+    | `{user.boost_since_timestamp}` | When they started boosting (unix) |
+    | `{user.color}` | Top role color as hex |
+    | `{user.top_role}` | Top role name |
+    | `{user.role_list}` | Role mentions |
+    | `{user.role_text_list}` | Role names |
+    | `{user.bot}` | `Yes` / `No` |
+    | `{user.badges}` | Profile badges as text |
+    | `{user.badges_icons}` | Profile badges as emojis |
+  </Tab>
+  <Tab title="Server">
+    | Variable | Output |
+    | -------- | ------ |
+    | `{guild}` / `{guild.name}` | Server name |
+    | `{guild.id}` | Server ID |
+    | `{guild.count}` | Member count |
+    | `{guild.humans}` | Human member count |
+    | `{guild.bots}` | Bot count |
+    | `{guild.owner}` / `{guild.owner_id}` | Owner name / ID |
+    | `{guild.icon}` | Icon URL |
+    | `{guild.banner}` | Banner URL |
+    | `{guild.splash}` | Invite splash URL |
+    | `{guild.discovery}` | Discovery splash URL |
+    | `{guild.created_at}` | Creation date (UTC) |
+    | `{guild.created_at_timestamp}` | Creation date (unix) |
+    | `{guild.boost_count}` | Number of boosts |
+    | `{guild.boost_tier}` | Boost level, `No Level` if none |
+    | `{guild.emoji_count}` | Emoji count |
+    | `{guild.role_count}` | Role count |
+    | `{guild.vanity}` | Vanity invite code |
+    | `{guild.preferred_locale}` | Server locale |
+    | `{guild.key_features}` | Server features |
+    | `{guild.shard}` | Shard ID |
+    | `{guild.afk_channel}` / `{guild.afk_timeout}` | AFK channel / timeout |
+    | `{guild.max_members}` / `{guild.max_presences}` | Member limits |
+    | `{guild.max_video_channel_users}` | Video channel user limit |
+    | `{guild.channels}` / `{guild.channels_count}` | All channels / count |
+    | `{guild.text_channels}` / `{guild.text_channels_count}` | Text channels / count |
+    | `{guild.voice_channels}` / `{guild.voice_channels_count}` | Voice channels / count |
+    | `{guild.category_channels}` / `{guild.category_channels_count}` | Categories / count |
+  </Tab>
+  <Tab title="Channel">
+    | Variable | Output |
+    | -------- | ------ |
+    | `{channel}` / `{channel.mention}` | Mentions the channel |
+    | `{channel.name}` | Channel name |
+    | `{channel.id}` | Channel ID |
+    | `{channel.topic}` | Channel topic |
+    | `{channel.type}` | `text`, `news`, `voice` ... |
+    | `{channel.category_id}` / `{channel.category_name}` | Parent category |
+    | `{channel.position}` | Position in the list |
+    | `{channel.slowmode_delay}` | Slowmode in seconds |
+  </Tab>
+  <Tab title="Date & Time">
+    | Variable | Output |
+    | -------- | ------ |
+    | `{date.now}` | Today's date (Pacific) |
+    | `{date.now_proper}` | Today's date with weekday (Pacific) |
+    | `{date.now_short}` | `MM/DD/YYYY` (Pacific) |
+    | `{date.now_shorter}` | `MM/DD/YY` (Pacific) |
+    | `{time.now}` | 12 hour time (Pacific) |
+    | `{time.now_military}` | 24 hour time (Pacific) |
+    | `{date.utc_timestamp}` | Current unix timestamp |
+    | `{date.utc_now}` | Today's date (UTC) |
+    | `{date.utc_now_proper}` | Today's date with weekday (UTC) |
+    | `{date.utc_now_short}` / `{date.utc_now_shorter}` | Short dates (UTC) |
+    | `{time.utc_now}` / `{time.utc_now_military}` | Current time (UTC) |
+  </Tab>
+  <Tab title="Punishments">
+    <Info>Available in `invoke` messages and DMs.</Info>
+
+    | Variable | Output |
+    | -------- | ------ |
+    | `{moderator}` | Moderator name |
+    | `{moderator.mention}` | Mentions the moderator |
+    | `{moderator.name}` | Moderator username |
+    | `{moderator.id}` | Moderator ID |
+    | `{moderator.avatar}` | Moderator avatar |
+    | `{moderator.color}` | Moderator's top role color |
+    | `{moderator.created_at}` | Moderator account creation date |
+    | `{moderator.bot}` | `Yes` / `No` |
+    | `{reason}` | Punishment reason |
+    | `{duration}` | Punishment duration (timeouts, tempbans) |
+    | `{invite_url}` | Invite back to the server (softban) |
+  </Tab>
+  <Tab title="Levels">
+    <Info>Available in `levels message`.</Info>
+
+    | Variable | Output |
+    | -------- | ------ |
+    | `{level.new_rank}` | The level the member just reached |
+    | `{level.user_xp}` | The member's total XP |
+  </Tab>
+  <Tab title="Boost">
+    <Info>Available in `boost` messages.</Info>
+
+    | Variable | Output |
+    | -------- | ------ |
+    | `{boost.count}` | How many boosts the member has |
+    | `{guild.boost_count}` | Total server boosts |
+  </Tab>
+  <Tab title="Bump Reminder">
+    | Variable | Output |
+    | -------- | ------ |
+    | `{bumpreminder.last_user_bump}` | The last member who bumped |
+    | `{bumpreminder.next_bump}` | Relative timestamp for the next bump |
+  </Tab>
+  <Tab title="Last.fm">
+    <Info>
+      Available in `lastfm mode`. Here `{user.*}` describes the **Last.fm account** and
+      `{author.*}` describes the Discord member.
+    </Info>
+
+    | Variable | Output |
+    | -------- | ------ |
+    | `{user.name}` | Last.fm username |
+    | `{user.url}` | Last.fm profile URL |
+    | `{user.avatar}` | Last.fm avatar |
+    | `{user.plays}` | Total scrobbles |
+    | `{user.artist_crown}` | 👑 if they hold the crown for the artist |
+    | `{author}` / `{author.name}` / `{author.nickname}` | The Discord member |
+    | `{track.name}` / `{track.url}` / `{track.plays}` | Current track |
+    | `{artist.name}` / `{artist.url}` / `{artist.plays}` | Current artist |
+    | `{album.name}` / `{album.url}` / `{album.cover}` | Current album |
+  </Tab>
+  <Tab title="YouTube">
+    <Info>Available in `youtube message`.</Info>
+
+    | Variable | Output |
+    | -------- | ------ |
+    | `{youtube.channel.name}` | Channel name |
+    | `{youtube.channel.url}` | Channel URL |
+    | `{youtube.channel.id}` | Channel ID |
+    | `{youtube.video.title}` | Video title |
+    | `{youtube.video.url}` | Video URL |
+    | `{youtube.video.thumbnail_url}` | Video thumbnail |
+  </Tab>
+</Tabs>

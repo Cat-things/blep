@@ -1,0 +1,115 @@
+---
+title: Embeds
+description: "Build embeds anywhere Blep sends a message for you."
+icon: brackets-curly
+---
+
+## Where scripts work
+
+Every setting that stores a message accepts **plain text** or an **embed script**: welcome,
+goodbye and boost messages, autoresponders, timers, sticky messages, level-up messages, bump
+reminders, invoke messages, giveaways, ticket messages, webhooks, `createembed` and more.
+
+## Structure
+
+A script is a list of parameters. Each parameter is a key and a value, wrapped in braces:
+
+```
+{embed}$v{title: hello {user.name}}$v{description: welcome to {guild.name}}$v{color: #ff7aa2}
+```
+
+- `{embed}` marks the text as an embed script. Without it the text is sent as a normal message.
+- `{` opens a parameter, `:` separates the key from its value and `}` closes it.
+- `$v` separates parameters.
+- `&&` separates the arguments of parameters that take more than one value.
+
+<Tip>
+  `createembed` and `editembed` always treat their input as a script, so the `{embed}` marker
+  is optional there.
+</Tip>
+
+## Parameters
+
+| Parameter | Value | Example |
+| --------- | ----- | ------- |
+| `message` | Text sent above the embed | `{message: {user.mention}}` |
+| `title` | Embed title | `{title: hey {user.name}}` |
+| `description` | Embed body. New lines are kept | `{description: hello}` |
+| `color` | Hex, `rgb(r,g,b)`, a color name or `random` | `{color: #ff7aa2}` |
+| `url` | Link for the title | `{url: https://blep.wtf}` |
+| `image` | Large image URL | `{image: {user.avatar}}` |
+| `thumbnail` | Small image URL (top right) | `{thumbnail: {guild.icon}}` |
+| `timestamp` | Adds the current time. Optionally a unix or ISO time | `{timestamp}` |
+
+### Parameters with arguments
+
+<AccordionGroup>
+  <Accordion title="Author">
+    `name`, then an optional `icon` and `url`.
+
+    ```
+    {author: {user.display_name} && {user.avatar} && https://blep.wtf}
+    ```
+  </Accordion>
+  <Accordion title="Footer">
+    `text`, then an optional `icon`.
+
+    ```
+    {footer: {guild.name} && {guild.icon}}
+    ```
+  </Accordion>
+  <Accordion title="Field">
+    `name` and `value`. Add `inline` as a third argument to make it inline. Up to 25 fields.
+
+    ```
+    {field: Members && {guild.count} && inline}
+    ```
+  </Accordion>
+  <Accordion title="Button">
+    Link buttons take a URL; other styles (`blurple`, `green`, `grey`, `red`) are decorative.
+    Add `disabled` to grey a button out. An emoji can follow the label.
+
+    ```
+    {button: https://blep.wtf && website}
+    {button: link && docs && https://docs.blep.wtf}
+    {button: blurple && click me && 🐱}
+    {button: red && closed && disabled}
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Several embeds in one message
+
+Start each extra embed with another `{embed}`. A message can hold up to 10 embeds.
+
+```
+{embed}$v{title: rules}$v{description: be nice}$v{embed}$v{title: roles}$v{description: grab some in #roles}
+```
+
+## Copying an existing embed
+
+Use `embedcode (message link)` to turn any message into a script you can edit and reuse.
+
+## Variables
+
+Variables like `{user.mention}` or `{guild.count}` are replaced before the script is read.
+See [Variables](/resources/scripting/variables) for the full list.
+
+## FAQ
+
+### How do I add a new line?
+
+Press `SHIFT` + `ENTER` while typing. New lines in `description`, `message` and field values
+are kept.
+
+### Why is my embed sent as plain text?
+
+Commands that accept both text and embeds need the `{embed}` marker at the start, for example:
+
+```
+,welcome add #welcome {embed}$v{message: {user.mention}}$v{description: welcome!}
+```
+
+### Why didn't my image show up?
+
+Image, thumbnail, icon and URL values must be full `https://` links. Anything else is ignored.

@@ -1,0 +1,196 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "blep",
+  "colors": {
+    "primary": "#FF7AA2",
+    "light": "#FF9DBB",
+    "dark": "#E0457B"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://blep.wtf"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "overview/introduction",
+              "overview/quickstart",
+              "overview/why-blep",
+              "overview/customization"
+            ]
+          },
+          {
+            "group": "Security Setup",
+            "pages": [
+              "security/antinuke",
+              "security/antiraid",
+              "security/moderation",
+              "security/fake-permissions",
+              "security/honeypot",
+              "security/automod"
+            ]
+          },
+          {
+            "group": "Server Configuration",
+            "pages": [
+              "configuration/server-settings",
+              "configuration/command-aliases",
+              {
+                "group": "Messages",
+                "icon": "message",
+                "pages": [
+                  "configuration/messages/system",
+                  "configuration/messages/responder",
+                  "configuration/messages/timer",
+                  "configuration/messages/sticky"
+                ]
+              },
+              {
+                "group": "Roles",
+                "icon": "users-gear",
+                "pages": [
+                  "configuration/roles/reaction",
+                  "configuration/roles/button",
+                  "configuration/roles/booster",
+                  "configuration/roles/vanity",
+                  "configuration/roles/autorole"
+                ]
+              },
+              {
+                "group": "Tickets",
+                "icon": "ticket",
+                "pages": [
+                  "configuration/tickets/overview",
+                  "configuration/tickets/panels",
+                  "configuration/tickets/forms",
+                  "configuration/tickets/commands",
+                  "configuration/tickets/variables"
+                ]
+              },
+              "configuration/starboard",
+              "configuration/voicemaster",
+              "configuration/level-rewards",
+              "configuration/bump-reminder",
+              "configuration/reaction-triggers",
+              "configuration/logging"
+            ]
+          },
+          {
+            "group": "Miscellaneous",
+            "pages": [
+              "miscellaneous/music",
+              "miscellaneous/giveaway",
+              "miscellaneous/webhook",
+              "miscellaneous/counters",
+              "miscellaneous/utility"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/lastfm",
+              "integrations/spotify",
+              "integrations/social-notifications",
+              "integrations/fortnite",
+              "integrations/roblox"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "resources/syntax",
+              {
+                "group": "Scripting",
+                "icon": "scroll",
+                "pages": [
+                  "resources/scripting/embeds",
+                  "resources/scripting/variables",
+                  "resources/scripting/pagination"
+                ]
+              },
+              "resources/permissions",
+              "resources/languages"
+            ]
+          },
+          {
+            "group": "Common Issues",
+            "pages": [
+              "common-issues/permissions",
+              "common-issues/ios-dash"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Commands",
+        "groups": [
+          {
+            "group": "Commands",
+            "pages": [
+              "commands/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Self-hosting",
+        "groups": [
+          {
+            "group": "Self-hosting",
+            "pages": [
+              "self-hosting/installation",
+              "self-hosting/configuration"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support Server",
+        "href": "https://discord.gg/blep"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Invite",
+      "href": "https://blep.wtf/invite"
+    }
+  },
+  "seo": {
+    "metatags": {
+      "theme-color": "#FF7AA2",
+      "og:site_name": "blep"
+    },
+    "indexing": "navigable"
+  },
+  "footer": {
+    "socials": {
+      "discord": "https://discord.gg/blep",
+      "github": "https://github.com/cat-things/blep"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/invite",
+      "destination": "https://blep.wtf/invite"
+    },
+    {
+      "source": "/discord",
+      "destination": "https://discord.gg/blep"
+    }
+  ]
+}

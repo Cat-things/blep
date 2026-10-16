@@ -1,0 +1,42 @@
+---
+title: Permissions & Hierarchy
+description: "Fix \"I can't do that\" errors and mutes that don't stick."
+icon: lock
+---
+
+## Role hierarchy
+
+Discord only lets Blep act on members and roles **below its own top role**. If Blep says a
+member is above it, open **Server Settings → Roles** and drag Blep's role higher.
+
+You also can't moderate someone whose top role is equal to or above yours (unless you own
+the server).
+
+## Mutes and locks that don't work
+
+If members can still talk after being muted or after `,lock`, the channel or server is giving
+them **Send Messages** directly.
+
+<Steps>
+  <Step title="Check the channel">
+    In the channel's **Permissions** tab, set **Send Messages** for `@everyone` (or your member
+    role) to neutral (`/`).
+  </Step>
+  <Step title="Check role overrides">
+    On Discord, a role **allow** on a channel beats another role's **deny**. If `@Member` has
+    Send Messages allowed on the channel, the `Muted` role's deny can't win. Set it to neutral.
+  </Step>
+  <Step title="Re-run setupmute">
+    Channels created after `,setupmute` don't have the mute overrides yet. Running
+    `,setupmute` again re-applies them everywhere.
+  </Step>
+</Steps>
+
+### Lockdown with a custom member role
+
+If your members get a role (e.g. `@Member`) instead of relying on `@everyone`, tell Blep to lock
+that role:
+
+```javascript Syntax
+,lockdown role (role)
+```

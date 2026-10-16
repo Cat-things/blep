@@ -1,0 +1,79 @@
+---
+title: Syntax
+description: "How to read and write Blep commands."
+icon: code
+---
+
+## Reading command syntax
+
+| Notation | Meaning |
+| -------- | ------- |
+| `(argument)` | Required |
+| `<argument>` | Optional |
+| `[--flag value]` | Optional flag |
+| `a or b` / `a \| b` | Pick one |
+
+For example, `,ban (member) <delete history> <reason>` needs a member, and the history and
+reason are optional.
+
+## Durations
+
+Durations are a number followed by a unit, and units can be chained:
+
+| Unit | Meaning |
+| ---- | ------- |
+| `s` | seconds |
+| `m` | minutes |
+| `h` | hours |
+| `d` | days |
+| `w` | weeks |
+
+```
+,timeout @blep 1h
+,timeout @blep 2d3h
+,tempban @blep 1w spamming
+```
+
+Blep is a little more relaxed than other bots: `1 hour` and `2 days 3 hours` also work, and a
+bare number means minutes.
+
+## Flags
+
+Some commands take flags after the main arguments: `--name value`. Toggles accept `on`/`off`,
+`true`/`false` or `yes`/`no`, and a toggle with no value means `on`.
+
+```
+,autoresponder add hi, hello there --reply --self_destruct 10
+,antinuke ban on --threshold 3 --do ban --command on
+```
+
+<Tip>
+  iPhones turn `--` into `—`. Blep accepts both, so you don't need to turn off smart
+  punctuation.
+</Tip>
+
+### Punishments (`--do`)
+
+| Action | What happens |
+| ------ | ------------ |
+| `delete` | Deletes the message (automod only) |
+| `warn` | Adds a warning |
+| `timeout` | Times the member out |
+| `jail` | Jails the member (needs `,setup`) |
+| `kick` | Kicks the member |
+| `ban` | Bans the member |
+| `softban` | Bans and unbans to wipe their messages |
+| `stripstaff` | Removes staff roles and roles with dangerous permissions (antinuke) |
+
+`stripstaff` removes roles bound with `,bind staff (role)` plus any role with dangerous
+permissions such as administrator, ban members or manage roles.
+
+## Message links
+
+Many commands take a message link. Right click (or long press) a message and choose
+**Copy Message Link**. You can also reply to the message and use `^` instead of the link.
+
+## Removing entries by number
+
+List commands number their entries. For commands that support it, remove an entry with
+`select:NUMBER`, e.g. `,autoresponder remove select:3`.

@@ -1,0 +1,108 @@
+---
+title: "Server Settings"
+description: "Prefixes, disabling commands and modules, ignoring channels and restricting commands."
+icon: sliders
+---
+
+## Prefixes
+
+Blep responds to `,` and `;` by default.
+
+<AccordionGroup>
+  <Accordion title="Setting a server prefix">
+    Replaces both default prefixes. Requires **Manage Server**.
+
+    ```javascript Syntax
+    ,prefix set (prefix)
+    ```
+    ```javascript Example
+    ,prefix set !
+    ```
+  </Accordion>
+  <Accordion title="Going back to the defaults">
+    ```javascript Syntax
+    ,prefix remove
+    ```
+  </Accordion>
+  <Accordion title="Setting a personal prefix">
+    A personal prefix works for you in every server Blep is in, alongside the server's
+    prefix. Use `remove` to delete it.
+
+    ```javascript Syntax
+    ,prefix self (prefix or remove)
+    ```
+    ```javascript Example
+    ,prefix self j
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Disabling commands & modules
+
+Disabled commands and modules can't be used by anyone in the server. Disabling a group disables
+all of its subcommands.
+
+```javascript Syntax
+,disablecommand (command)
+,enablecommand (command)
+,disablemodule (module)
+,enablemodule (module)
+,disablecommand list
+```
+
+```javascript Example
+,disablecommand 8ball
+,disablemodule fun
+```
+
+<Info>
+  Modules are the categories shown in `,help`. A disabled module overrides any command inside
+  it. The `config` module can't be disabled so you can't lock yourself out.
+</Info>
+
+## Ignoring members & channels
+
+Blep won't respond to ignored members or in ignored channels and categories. Members with
+**Manage Server** are never ignored so they can undo it.
+
+```javascript Syntax
+,ignore (member, channel or category)
+,ignore list
+```
+
+## Restricting commands to roles
+
+Only members with one of the listed roles (or Administrator) can use a restricted command.
+Run the command again to remove the role.
+
+```javascript Syntax
+,restrictcommand add (command) (role)
+,restrictcommand remove (command) (role)
+,restrictcommand list
+,restrictcommand reset
+```
+
+```javascript Example
+,restrictcommand add snipe @Booster
+```
+
+## Settings
+
+`,settings view` shows the important settings at a glance.
+
+| Command | Description |
+| ------- | ----------- |
+| `,settings modlog (channel or off)` | Where moderation cases are logged |
+| `,settings jailrole (role or off)` | Role applied by `jail` |
+| `,settings jailchannel (channel or off)` | Channel jailed members can talk in |
+| `,settings dj (role or off)` | Role required to control music |
+| `,settings autoplay (on or off)` | Keep playing similar tracks when the queue ends |
+
+## Staff roles
+
+Mark your staff roles so `stripstaff` punishments and honeypot exemptions know about them:
+
+```javascript Syntax
+,bind staff (role)
+,bind staff list
+```

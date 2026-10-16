@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: blep
+          POSTGRES_PASSWORD: blep
+          POSTGRES_DB: blep
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U blep"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://blep:blep@localhost:5432/blep
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt pytest pytest-asyncio
+      - run: python -m compileall -q blep scripts
+      - run: python -m pytest -q
+      - run: python scripts/check.py

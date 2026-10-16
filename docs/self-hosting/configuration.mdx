@@ -1,0 +1,45 @@
+---
+title: "Configuration"
+description: "Environment variables for self-hosted Blep."
+icon: file-code
+---
+
+Blep reads its configuration from environment variables or a `.env` file in the working
+directory. Copy `.env.example` to get started.
+
+## Required
+
+| Variable | Description |
+| -------- | ----------- |
+| `DISCORD_TOKEN` | Your bot token |
+| `DATABASE_URL` | PostgreSQL connection string, e.g. `postgresql://blep:blep@localhost:5432/blep` |
+| `OWNER_IDS` | Comma separated user IDs allowed to use developer commands |
+
+## General
+
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `DEFAULT_PREFIXES` | `, ;` | Space separated default prefixes |
+| `BLEP_WEBSITE` | `https://blep.wtf` | Used in help, embeds and the bio suffix |
+| `BLEP_DOCS` | `https://docs.blep.wtf` | Docs link in help |
+| `BLEP_SUPPORT` | `https://discord.gg/blep` | Support server link |
+| `EMOJI_APPROVE` / `EMOJI_WARN` / `EMOJI_DENY` | ✅ ⚠️ ❌ | Response emojis, custom emoji strings work |
+
+## Integrations
+
+Every integration turns itself off when its keys are missing; the commands explain that the
+host hasn't configured them.
+
+| Variable | Used by |
+| -------- | ------- |
+| `LAVALINK_URI`, `LAVALINK_PASSWORD` | Music |
+| `LASTFM_API_KEY` | Last.fm ([get a key](https://www.last.fm/api/account/create)) |
+| `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI` | Spotify account control and Spotify links in music |
+| `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` | Twitch live notifications |
+| `FORTNITE_API_KEY` | Fortnite (optional, raises rate limits on fortnite-api.com) |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | `chatgpt` |
+
+## Developer commands
+
+Users in `OWNER_IDS` can use hidden maintenance commands: `reload`, `sync`, `blacklist`,
+`guilds`, `leaveguild`, `sql`, `eval` and `shutdown`.

@@ -1,0 +1,87 @@
+---
+title: "Fake Permissions"
+description: "Let moderators use Blep's moderation without dangerous Discord permissions."
+icon: shield-check
+---
+
+## Overview
+
+### Why use fake permissions?
+
+A moderator with real **Ban Members** can ban hundreds of people per minute with a script or
+Discord's mass ban, and no bot can stop that fast enough. Fake permissions remove the risk:
+your moderators keep **no** dangerous Discord permissions, and Blep lets them run its
+moderation commands anyway.
+
+### How they work
+
+When a role has the `ban_members` fake permission, members with that role can use `,ban`,
+`,unban`, `,softban` ... through Blep, but Discord's own ban button stays locked. Every action
+goes through Blep, so it is logged, rate limited by [antinuke](/security/antinuke) and
+reversible.
+
+<Tip>
+  `,help (command)` lists the permissions a command needs.
+</Tip>
+
+## Setting up fake permissions
+
+<Warning>Only the **server owner** can manage fake permissions.</Warning>
+
+<AccordionGroup>
+  <Accordion title="Granting fake permissions to a role">
+    Separate several permissions with commas.
+
+    ```javascript Syntax
+    ,fakepermissions add (role) (permissions)
+    ```
+    ```javascript Example
+    ,fakepermissions add @Mod manage_messages, moderate_members, kick_members
+    ```
+  </Accordion>
+  <Accordion title="Revoking fake permissions">
+    ```javascript Syntax
+    ,fakepermissions remove (role) (permissions)
+    ```
+    ```javascript Example
+    ,fakepermissions remove @Mod kick_members
+    ```
+  </Accordion>
+  <Accordion title="Viewing fake permissions">
+    Optionally pass a role to only see that role.
+
+    ```javascript Syntax
+    ,fakepermissions list <role>
+    ```
+  </Accordion>
+  <Accordion title="Removing every fake permission">
+    ```javascript Syntax
+    ,fakepermissions reset
+    ```
+  </Accordion>
+</AccordionGroup>
+
+`,fakepermissions permissions` lists every permission you can grant. They are the same names as
+the [permissions](/resources/permissions) page.
+
+## Recommended setups
+
+<Tabs>
+  <Tab title="Moderator">
+    ```javascript
+    ,fakepermissions add @Moderator manage_messages, moderate_members, manage_nicknames, kick_members
+    ```
+  </Tab>
+  <Tab title="Administrator">
+    ```javascript
+    ,fakepermissions add @Admin manage_messages, moderate_members, manage_nicknames, manage_roles, ban_members, kick_members
+    ```
+  </Tab>
+  <Tab title="Co-owner">
+    `administrator` unlocks every Blep command that needs a permission.
+
+    ```javascript
+    ,fakepermissions add @Co-owner administrator
+    ```
+  </Tab>
+</Tabs>

@@ -1,0 +1,59 @@
+---
+title: Quickstart
+description: "Invite Blep and configure the essentials in a few minutes."
+icon: "rocket"
+---
+
+<Steps>
+  <Step title="Invite Blep">
+    Head to [blep.wtf/invite](https://blep.wtf/invite) and add Blep to your server. Blep needs
+    **Administrator** to run antinuke, jail and logging reliably. You can give it fewer
+    permissions, but some features will stop working.
+  </Step>
+  <Step title="Move Blep's role up">
+    Discord only lets bots manage members and roles **below** their own top role. Drag the
+    `blep` role near the top of **Server Settings → Roles** so it can moderate everyone it
+    needs to.
+  </Step>
+  <Step title="Set up moderation">
+    Run `,setup` to create the jail role, the `#jail` channel and the `#jail-log` case log, then
+    `,setupmute` for the mute roles. More in [Moderation](/security/moderation).
+  </Step>
+  <Step title="Protect the server">
+    Turn on antinuke modules and the join gate:
+
+    ```
+    ,antinuke ban on --threshold 3 --do ban --command on
+    ,antinuke kick on --threshold 3 --do ban --command on
+    ,antinuke role on --threshold 3 --do ban
+    ,antinuke channel on --threshold 3 --do ban
+    ,antiraid massjoin on --threshold 8 --do ban --lock true
+    ```
+  </Step>
+  <Step title="Say hi to new members">
+    ```
+    ,welcome add #general {embed}$v{message: {user.mention}}$v{description: welcome to **{guild.name}**, you're member #{guild.count}}
+    ```
+  </Step>
+</Steps>
+
+## Prefixes
+
+| Prefix | Where it works |
+| ------ | -------------- |
+| `,` | Default, every server |
+| `;` | Default, every server |
+| `@blep` | Mentioning the bot always works |
+| Custom server prefix | Replaces `,` and `;` after `,prefix set (symbol)` |
+| Personal prefix | Works for you in every server after `,prefix self (symbol)` |
+
+<Tip>
+  Forgot the prefix in a server? Mention the bot: `@blep prefix`.
+</Tip>
+
+## Getting help
+
+- `,help` opens the module browser.
+- `,help (command)` shows a command's syntax, permissions and an example. Groups page
+  through every subcommand.
+- `,help (module)` lists a module's commands, e.g. `,help moderation`.

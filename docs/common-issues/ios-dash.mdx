@@ -1,0 +1,13 @@
+---
+title: "iOS Dashes"
+description: "Why --flags still work on iPhone."
+icon: apple
+---
+
+iPhones and iPads automatically turn two dashes (`--`) into a long dash (`—`) because of
+**Smart Punctuation**. Most bots then ignore your flags.
+
+Blep accepts `—`, `–` and `--` for every flag, so `,antinuke ban on —do ban` works exactly like
+`,antinuke ban on --do ban`. You don't need to change any settings.
+
+If you want to turn it off anyway: **Settings → General → Keyboard → Smart Punctuation**.

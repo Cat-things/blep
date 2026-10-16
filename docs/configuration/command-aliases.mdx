@@ -1,0 +1,58 @@
+---
+title: "Command Aliases"
+description: "Create your own shortcuts for commands."
+icon: command
+---
+
+## Overview
+
+Aliases are server-wide shortcuts that run another command, with optional preset
+arguments. They need **Manage Server** to create.
+
+## Creating an alias
+
+```javascript Syntax
+,alias add (shortcut) (command)
+```
+
+```javascript Example
+,alias add deport ban
+```
+
+Now `,deport @blep spamming` runs `,ban @blep spamming`.
+
+### Placeholders
+
+Use `{0}`, `{1}` ... to place the member's arguments inside the command. Counting starts at
+`{0}`. The **last** placeholder takes everything that's left, so reasons with spaces work.
+
+```javascript
+,alias add shh timeout {0} 10m
+,shh @blep
+// runs: ,timeout @blep 10m
+```
+
+```javascript
+,alias add pic role {0} @pic perms
+,pic @blep
+// runs: ,role @blep @pic perms
+```
+
+```javascript
+,alias add yeet ban {0} {1}
+,yeet @blep being way too silly
+// {0} = @blep, {1} = being way too silly
+```
+
+<Info>
+  Aliases can't reuse the name of an existing command, and a server can have up to 150.
+</Info>
+
+## Managing aliases
+
+| Command | Description |
+| ------- | ----------- |
+| `,alias remove (shortcut)` | Delete an alias |
+| `,alias view (shortcut)` | See what an alias runs |
+| `,alias list` | List every alias |
+| `,alias reset` | Delete every alias |

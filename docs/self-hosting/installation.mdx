@@ -1,0 +1,83 @@
+---
+title: "Installation"
+description: "Run your own copy of Blep."
+icon: server
+---
+
+<Info>
+  You don't need to self-host to use Blep: [invite the public bot](https://blep.wtf/invite).
+  These pages are for people who want to run their own copy.
+</Info>
+
+## Create the Discord application
+
+<Steps>
+  <Step title="Create a bot">
+    Open the [Discord Developer Portal](https://discord.com/developers/applications), create an
+    application, open **Bot** and copy the token.
+  </Step>
+  <Step title="Enable privileged intents">
+    On the same page enable **Presence Intent**, **Server Members Intent** and
+    **Message Content Intent**. Blep needs all three: members for welcome messages and
+    antiraid, presences for vanity roles, message content for prefix commands.
+  </Step>
+  <Step title="Invite it">
+    Under **OAuth2 → URL Generator** tick `bot` and `applications.commands`, give it
+    **Administrator**, and open the generated link.
+  </Step>
+</Steps>
+
+## Option 1: Docker (recommended)
+
+You need Docker with the compose plugin.
+
+```bash
+git clone https://github.com/cat-things/blep.git
+cd blep
+cp .env.example .env   # paste your DISCORD_TOKEN and OWNER_IDS
+docker compose up -d --build
+```
+
+That starts three containers:
+
+| Service | Purpose |
+| ------- | ------- |
+| `blep` | The bot |
+| `postgres` | PostgreSQL 16 database |
+| `lavalink` | Lavalink v4 audio server for music |
+
+Logs: `docker compose logs -f blep`.
+
+## Option 2: Manual
+
+Requirements: Python 3.11+, PostgreSQL 14+, and optionally Java 17+ for Lavalink.
+
+```bash
+git clone https://github.com/cat-things/blep.git
+cd blep
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+createdb blep
+cp .env.example .env   # set DISCORD_TOKEN and DATABASE_URL
+python -m blep
+```
+
+The database schema is created and upgraded automatically on every start.
+
+## Updating
+
+```bash
+git pull
+docker compose up -d --build   # or restart `python -m blep`
+```
+
+## Checking your install
+
+`scripts/check.py` boots Blep without connecting to Discord, applies the schema and loads every
+module. It's a quick way to confirm your environment works:
+
+```bash
+DATABASE_URL=postgresql://localhost/blep python scripts/check.py
+```
