@@ -390,31 +390,38 @@ class Music(commands.Cog):
         await self.bot.wait_until_ready()
         delay = 5.0
         while True:
+            try:
+                delay = await self._check_node(delay)
+            except Exception:
+                log.exception("Lavalink supervisor error")
+                await asyncio.sleep(30)
+
+    async def _check_node(self, delay: float) -> float:
+        """One supervisor step. Returns the backoff delay for the next failed attempt."""
+        node = wavelink.Pool.nodes.get(NODE_ID)
+        if node is not None and node.status is not wavelink.NodeStatus.DISCONNECTED:
+            await asyncio.sleep(15)
+            if self._stuck(node):
+                await asyncio.sleep(5)  # give wavelink's own reconnect a chance to start
+                if self._stuck(node):
+                    await self._reset_node(node)
+            return 5.0
+        problem = await self._probe()
+        if problem is None:
+            try:
+                if node is None:
+                    await wavelink.Pool.connect(nodes=[self._make_node()], client=self.bot)
+                else:
+                    await wavelink.Pool.reconnect()
+            except Exception:
+                log.exception("Unexpected error while connecting to Lavalink")
             node = wavelink.Pool.nodes.get(NODE_ID)
             if node is not None and node.status is not wavelink.NodeStatus.DISCONNECTED:
-                delay = 5.0
-                await asyncio.sleep(15)
-                if self._stuck(node):
-                    await asyncio.sleep(5)  # give wavelink's own reconnect a chance to start
-                    if self._stuck(node):
-                        await self._reset_node(node)
-                continue
-            problem = await self._probe()
-            if problem is None:
-                try:
-                    if node is None:
-                        await wavelink.Pool.connect(nodes=[self._make_node()], client=self.bot)
-                    else:
-                        await wavelink.Pool.reconnect()
-                except Exception:
-                    log.exception("Unexpected error while connecting to Lavalink")
-                node = wavelink.Pool.nodes.get(NODE_ID)
-                if node is not None and node.status is not wavelink.NodeStatus.DISCONNECTED:
-                    continue
-                problem = "the websocket connection failed"
-            log.warning("Lavalink at %s is unavailable (%s), retrying in %ds", config.LAVALINK_URI, problem, delay)
-            await asyncio.sleep(delay)
-            delay = min(delay * 2, 300.0)
+                return 5.0
+            problem = "the websocket connection failed"
+        log.warning("Lavalink at %s is unavailable (%s), retrying in %ds", config.LAVALINK_URI, problem, delay)
+        await asyncio.sleep(delay)
+        return min(delay * 2, 300.0)
 
     # ------------------------------------------------------------------ helpers
     def autoplay_mode(self, guild_id: int) -> wavelink.AutoPlayMode:
