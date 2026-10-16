@@ -139,7 +139,8 @@ class BumpReminder(commands.Cog):
         if message.author.id == self.bot.user.id or message.type not in (discord.MessageType.default,
                                                                           discord.MessageType.reply):
             return
-        if isinstance(message.author, discord.Member) and message.channel.permissions_for(message.author).manage_messages:
+        author = message.author
+        if isinstance(author, discord.Member) and message.channel.permissions_for(author).manage_messages:
             return
         if not message.channel.permissions_for(message.guild.me).manage_messages:
             return
@@ -300,7 +301,8 @@ class BumpReminder(commands.Cog):
     async def bumpreminder_autolock(self, ctx: Context, enabled: Bool) -> None:
         cfg = self._require(ctx.guild.id)
         channel = ctx.guild.get_channel(cfg["channel_id"])
-        if enabled and isinstance(channel, discord.TextChannel) and not channel.permissions_for(ctx.guild.me).manage_roles:
+        me = ctx.guild.me
+        if enabled and isinstance(channel, discord.TextChannel) and not channel.permissions_for(me).manage_roles:
             raise UserError(f"I need the **manage permissions** permission in {channel.mention} to lock it")
         await self._set(ctx.guild.id, autolock=bool(enabled))
         if not enabled and isinstance(channel, discord.TextChannel) and not cfg["reminded"]:
@@ -318,7 +320,8 @@ class BumpReminder(commands.Cog):
     async def bumpreminder_autoclean(self, ctx: Context, enabled: Bool) -> None:
         cfg = self._require(ctx.guild.id)
         channel = ctx.guild.get_channel(cfg["channel_id"])
-        if enabled and isinstance(channel, discord.TextChannel) and not channel.permissions_for(ctx.guild.me).manage_messages:
+        me = ctx.guild.me
+        if enabled and isinstance(channel, discord.TextChannel) and not channel.permissions_for(me).manage_messages:
             raise UserError(f"I need the **manage messages** permission in {channel.mention}")
         await self._set(ctx.guild.id, autoclean=bool(enabled))
         await ctx.approve(f"Turned autoclean **{'on' if enabled else 'off'}**")

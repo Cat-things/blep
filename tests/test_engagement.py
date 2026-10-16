@@ -17,7 +17,7 @@ def test_xp_curve_matches_mee6_formula():
 
 
 def test_level_from_xp_is_inverse_of_total():
-    for level in range(0, 120):
+    for level in range(120):
         total = levels.total_xp_for_level(level)
         assert levels.level_from_xp(total) == level
         if level:

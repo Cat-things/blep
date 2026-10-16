@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
@@ -145,7 +144,7 @@ class BoosterRoles(commands.Cog):
                 if response.content_length and response.content_length > MAX_ICON_BYTES:
                     raise UserError("Role icons must be smaller than **256 KB**")
                 data = await response.content.read(MAX_ICON_BYTES + 1)
-        except (aiohttp.ClientError, asyncio.TimeoutError):
+        except (TimeoutError, aiohttp.ClientError):
             raise UserError("I couldn't download that image") from None
         if len(data) > MAX_ICON_BYTES:
             raise UserError("Role icons must be smaller than **256 KB**")

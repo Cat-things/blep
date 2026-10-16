@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Callable
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 import discord
@@ -100,7 +100,7 @@ def default_template(option: str) -> str:
 def render(option: str, template: str, guild: discord.Guild, now: datetime | None = None) -> str:
     if option.startswith(COUNTDOWN_PREFIX):
         target = int(option.removeprefix(COUNTDOWN_PREFIX))
-        now = now or datetime.now(timezone.utc)
+        now = now or datetime.now(UTC)
         value = format_remaining(target - now.timestamp())
     else:
         value = f"{OPTIONS[option][1](guild):,}"
@@ -140,7 +140,7 @@ class Counters(commands.Cog):
         channel = guild.get_channel(counter["channel_id"]) if guild else None
         if guild is None or channel is None:
             return
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if not force and counter["updated_at"] and now - counter["updated_at"] < UPDATE_INTERVAL:
             return
         name = render(counter["option"], counter["template"], guild, now)
@@ -195,9 +195,8 @@ class Counters(commands.Cog):
         resolved = resolve_option(option)
         if resolved is None:
             raise UserError(f"`{option[:30]}` isn't a counter option, see `help counter add`")
-        if resolved.startswith(COUNTDOWN_PREFIX) and int(resolved.removeprefix(COUNTDOWN_PREFIX)) <= datetime.now(
-            timezone.utc
-        ).timestamp():
+        is_countdown = resolved.startswith(COUNTDOWN_PREFIX)
+        if is_countdown and int(resolved.removeprefix(COUNTDOWN_PREFIX)) <= datetime.now(UTC).timestamp():
             raise UserError("That timestamp is in the past")
         text, flags = parse_flags(details, {"name": str})
         kind_raw = text.split()[0].lower() if text.split() else "voice"
@@ -232,7 +231,7 @@ class Counters(commands.Cog):
             channel = await ctx.guild.create_text_channel(
                 name, overwrites=overwrites, position=0, news=kind == "announce", reason=reason
             )
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         row = await self.bot.db.fetchrow(
             "INSERT INTO counters (channel_id, guild_id, option, template, updated_at) "
             "VALUES ($1, $2, $3, $4, $5) RETURNING *",

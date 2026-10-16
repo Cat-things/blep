@@ -203,8 +203,8 @@ class Giveaway(commands.Cog):
                 roles = ", ".join(f"<@&{r}>" for r in missing)
                 return await reply(f"You need {roles} to enter this giveaway", ok=False)
             if gw["min_level"] or gw["max_level"]:
-                levels = self.bot.get_cog("Levels")
-                level = await levels.get_level(member.guild.id, member.id) if levels else 0  # type: ignore[attr-defined]
+                levels: Any = self.bot.get_cog("Levels")
+                level = await levels.get_level(member.guild.id, member.id) if levels else 0
                 if gw["min_level"] and level < gw["min_level"]:
                     return await reply(f"You need to be at least **level {gw['min_level']}** to enter "
                                        f"(you're level {level})", ok=False)
@@ -218,10 +218,12 @@ class Giveaway(commands.Cog):
         count = await self.bot.db.fetchval("SELECT COUNT(*) FROM giveaway_entries WHERE message_id = $1", message.id)
         self.entries[message.id] = count
         self.dirty.add(message.id)
+        entries = f"**{count:,}** entr{'y' if count == 1 else 'ies'}"
         if removed is None:
-            await reply(f"You entered the giveaway for **{gw['prize']}**! There are now **{count:,}** entries")
+            await reply(f"You entered the giveaway for **{gw['prize']}**! There {'is' if count == 1 else 'are'} "
+                        f"now {entries}")
         else:
-            await reply(f"You left the giveaway for **{gw['prize']}** (**{count:,}** entries)")
+            await reply(f"You left the giveaway for **{gw['prize']}** ({entries} left)")
 
     # ------------------------------------------------------------------ lifecycle
     def _partial_message(self, gw: dict[str, Any]) -> discord.PartialMessage | None:
@@ -258,8 +260,7 @@ class Giveaway(commands.Cog):
             "UPDATE giveaways SET ended = TRUE, winners = $1, ends_at = LEAST(ends_at, NOW()) WHERE message_id = $2",
             winners, gw["message_id"],
         )
-        if gw["ends_at"] > discord.utils.utcnow():
-            gw["ends_at"] = discord.utils.utcnow()
+        gw["ends_at"] = min(gw["ends_at"], discord.utils.utcnow())
         await self.refresh_message(gw)
         self.entries.pop(gw["message_id"], None)
         self.last_refresh.pop(gw["message_id"], None)
@@ -304,7 +305,10 @@ class Giveaway(commands.Cog):
             if gw is None:
                 self.dirty.discard(message_id)
             elif monotonic - self.last_refresh.get(message_id, 0.0) >= REFRESH_EVERY:
-                await self.refresh_message(gw)
+                try:
+                    await self.refresh_message(gw)
+                except Exception:
+                    log.exception("Failed to refresh giveaway %s", message_id)
 
     @giveaway_loop.before_loop
     async def before_giveaway_loop(self) -> None:
@@ -380,8 +384,8 @@ class Giveaway(commands.Cog):
         message = await channel.send(embed=build_embed(gw, 0), view=entry_view())
         gw["message_id"] = message.id
         await self.bot.db.execute(
-            "INSERT INTO giveaways (message_id, guild_id, channel_id, host_id, prize, winner_count, started_at, ends_at) "
-            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+            "INSERT INTO giveaways (message_id, guild_id, channel_id, host_id, prize, winner_count, started_at, "
+            "ends_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
             message.id, ctx.guild.id, channel.id, ctx.author.id, prize, winners, now, gw["ends_at"],
         )
         self.active[message.id] = gw
@@ -504,7 +508,8 @@ class Giveaway(commands.Cog):
         await self._edit(ctx, link, f"Changed the prize to **{prize}**", prize=prize)
 
     @giveaway_edit.command(name="duration", help="Change how long the giveaway lasts (from when it started)",
-                           usage="(message link) (duration)", extras={"example": "https://discord.com/channels/1/2/3 24h"})
+                           usage="(message link) (duration)",
+                           extras={"example": "https://discord.com/channels/1/2/3 24h"})
     @checks.has_permissions(manage_guild=True)
     async def edit_duration(self, ctx: Context, link: MessageLinkArg, *, duration: str) -> None:
         delta = parse_duration(duration)

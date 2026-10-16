@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING, Any
 import discord
 from discord.ext import commands
 
-from blep.config import Colors
 from blep.core import checks
 from blep.core.context import Context
 from blep.core.converters import Bool, Color, Emoji, Member, TextChannel
@@ -93,7 +92,7 @@ def _board_commands(board: str) -> dict[str, commands.Command]:
     verb = info["verb"]
     found: dict[str, commands.Command] = {}
 
-    def make(parent: commands.Group | None, name: str, *, group: bool = False, **kwargs: Any):  # noqa: ANN202
+    def make(parent: commands.Group | None, name: str, *, group: bool = False, **kwargs: Any):
         def decorator(func: Any) -> commands.Command:
             attribute = name if parent is None else f"{parent.qualified_name}_{name}".replace(" ", "_")
             func.__name__ = attribute
@@ -230,8 +229,7 @@ def _board_commands(board: str) -> dict[str, commands.Command]:
         embed.add_field(name="Jump URL", value=_on_off(cfg["show_jump_url"]))
         embed.add_field(name="Attachments", value=_on_off(cfg["show_attachments"]))
         ignored = len(self.ignored.get((ctx.guild.id, board), set()))
-        embed.set_footer(text=f"{ignored} ignored channel{'s' if ignored != 1 else ''}, role{'s' if ignored != 1 else ''} "
-                              f"or member{'s' if ignored != 1 else ''}")
+        embed.set_footer(text=f"{ignored} ignored channel{'s' if ignored != 1 else ''}, roles or members")
         await ctx.send(embed=embed)
 
     @make(root, "reset", aliases=["clear"], help=f"Reset the {board} configuration")

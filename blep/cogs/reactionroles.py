@@ -407,7 +407,7 @@ class Roles(commands.Cog):
         self, ctx: Context, message: Message, role: AssignableRole, style: str, *, details: str = ""
     ) -> None:
         if message.author.id != ctx.me.id:
-            raise UserError("Button roles can only be added to messages sent by me, send one with an embed script first")
+            raise UserError("Button roles can only be added to my own messages, send one with an embed script first")
         if message.flags.components_v2:
             raise UserError("I can't add buttons to that kind of message")
         resolved = BUTTON_STYLES.get(style.lower())
