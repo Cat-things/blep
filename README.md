@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/lockup-dark.svg">
+    <img alt="blep" src="assets/brand/lockup-light.svg" height="72">
+  </picture>
+</p>
+
 # blep
 
 **A free, open-source alternative to [bleed](https://bleed.bot).** Moderation, antinuke, welcome
@@ -49,6 +56,12 @@ DATABASE_URL=postgresql://localhost/blep_dev python scripts/generate_docs.py   #
 ```
 
 Framework conventions live in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Brand
+
+Logo files live in [`assets/brand/`](assets/brand): SVG mark and lockups, a 1024px bot avatar
+(`avatar.png`) and a profile banner (`banner.png`). Regenerate the SVGs with
+`python scripts/brand_logo.py assets/brand`.
 
 ## License
 
