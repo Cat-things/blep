@@ -387,10 +387,11 @@ def resolve_timezone(text: str) -> str | None:
     if not cleaned:
         return None
     full, cities = _zone_index()
-    if (name := full.get(cleaned.replace(" ", "_"))) is not None:
-        return name
+    # Aliases first so abbreviations like EST map to a DST-aware zone instead of the legacy fixed one.
     if cleaned in TIMEZONE_ALIASES:
         return TIMEZONE_ALIASES[cleaned]
+    if (name := full.get(cleaned.replace(" ", "_"))) is not None:
+        return name
     if (name := cities.get(cleaned)) is not None:
         return name
     if match := re.fullmatch(r"(?:utc|gmt)?\s*([+-])\s*(\d{1,2})(?::?00)?", cleaned):
