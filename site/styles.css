@@ -1425,8 +1425,7 @@ kbd {
   text-align: start;
 }
 
-.code-box label,
-.code-box .code-label {
+.code-box label {
   display: block;
   margin-block-end: 0.4rem;
   color: var(--text);
@@ -1477,11 +1476,6 @@ kbd {
 .code-actions .btn {
   white-space: normal;
   text-align: start;
-}
-
-.code-actions .btn code {
-  padding: 0;
-  background: transparent;
 }
 
 .copy-status {
