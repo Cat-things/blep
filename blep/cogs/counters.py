@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 UPDATE_INTERVAL = timedelta(minutes=6)
 MAX_COUNTERS = 15
 COUNTDOWN_PREFIX = "countdown:"
-TIMESTAMP_RE = re.compile(r"^(?:<t:)?(\d{9,11})(?::[tTdDfFR])?>?$")
+TIMESTAMP_RE = re.compile(r"^(?:<t:)?(\d{9,11})(?::[a-z])?>?$", re.IGNORECASE)
 
 
 def _humans(guild: discord.Guild) -> int:

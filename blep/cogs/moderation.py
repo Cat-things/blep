@@ -426,6 +426,14 @@ class Moderation(commands.Cog):
             return False
         return True
 
+    @staticmethod
+    async def _is_banned(guild: discord.Guild, user: discord.abc.Snowflake) -> bool:
+        try:
+            await guild.fetch_ban(user)
+        except discord.NotFound:
+            return False
+        return True
+
     async def _clear_tempban(self, guild_id: int, user_id: int) -> None:
         await self.bot.db.execute(
             "DELETE FROM moderation_tempbans WHERE guild_id = $1 AND user_id = $2", guild_id, user_id
@@ -670,6 +678,8 @@ class Moderation(commands.Cog):
         moderation.ensure_can_moderate(ctx.author, user, "ban")
         if user.id in self.hardbans[ctx.guild.id]:
             raise UserError(f"**{user}** is already hard banned")
+        if not isinstance(user, discord.Member) and await self._is_banned(ctx.guild, user):
+            raise UserError(f"**{discord.utils.escape_markdown(str(user))}** is already banned")
         templates = await self._templates(ctx.guild.id, "ban")
         if isinstance(user, discord.Member):
             await self._dm(ctx, "ban", user, templates, reason=reason)
@@ -713,6 +723,8 @@ class Moderation(commands.Cog):
         moderation.ensure_can_moderate(ctx.author, user, "softban")
         if user.id in self.hardbans[ctx.guild.id]:
             raise UserError(f"**{user}** is hard banned")
+        if not isinstance(user, discord.Member) and await self._is_banned(ctx.guild, user):
+            raise UserError(f"**{discord.utils.escape_markdown(str(user))}** is banned, softbanning would unban them")
         templates = await self._templates(ctx.guild.id, "softban")
         invite = None
         if isinstance(user, discord.Member):
@@ -2458,12 +2470,14 @@ class Moderation(commands.Cog):
             sticky_ids = {
                 config[c] for c in ("jail_role_id", "mute_role_id", "image_mute_role_id", "reaction_mute_role_id")
             } if config else set()
+            # Jail/mute roles are re-applied automatically on rejoin, so `role restore` never hands them out.
             sticky = [rid for rid in roles if rid in sticky_ids]
+            restorable = [rid for rid in roles if rid not in sticky_ids]
             await self.bot.db.execute(
                 "INSERT INTO moderation_role_restore (guild_id, user_id, role_ids, sticky_role_ids) VALUES ($1, $2, $3, $4) "
                 "ON CONFLICT (guild_id, user_id) DO UPDATE SET role_ids = EXCLUDED.role_ids, "
                 "sticky_role_ids = EXCLUDED.sticky_role_ids, left_at = NOW()",
-                guild.id, member.id, roles, sticky,
+                guild.id, member.id, restorable, sticky,
             )
         except Exception:
             log.exception("Failed to save roles of %s in %s", member.id, guild.id)

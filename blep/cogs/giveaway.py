@@ -272,10 +272,12 @@ class Giveaway(commands.Cog):
         channel = self.bot.get_channel(gw["channel_id"])
         if not isinstance(channel, discord.abc.Messageable):
             return
-        if winners:
-            mentions = ", ".join(f"<@{w}>" for w in winners)
-            text = f"{GIVEAWAY_EMOJI} {'New winner' if reroll else 'Congratulations'}{'s' if reroll and len(winners) > 1 else ''}" \
-                   f"{':' if reroll else ''} {mentions}! You won **{gw['prize']}**"
+        mentions = ", ".join(f"<@{w}>" for w in winners)
+        if winners and reroll:
+            plural = "s" if len(winners) > 1 else ""
+            text = f"{GIVEAWAY_EMOJI} New winner{plural}: {mentions}! You won **{gw['prize']}**"
+        elif winners:
+            text = f"{GIVEAWAY_EMOJI} Congratulations {mentions}! You won **{gw['prize']}**"
         else:
             text = f"Nobody entered the giveaway for **{gw['prize']}**, so there are no winners"
         reference = discord.MessageReference(

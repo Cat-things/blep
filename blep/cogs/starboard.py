@@ -47,7 +47,7 @@ def emoji_key(emoji: str | discord.PartialEmoji | discord.Emoji) -> str:
         emoji = discord.PartialEmoji.from_str(emoji)
     if emoji.id:
         return str(emoji.id)
-    return (emoji.name or "").replace("️", "")
+    return (emoji.name or "").replace("\ufe0f", "")
 
 
 def _is_image(attachment: discord.Attachment) -> bool:

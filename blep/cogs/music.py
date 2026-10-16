@@ -361,6 +361,30 @@ class Music(commands.Cog):
         except (aiohttp.ClientError, asyncio.TimeoutError, OSError) as error:
             return str(error) or error.__class__.__name__
 
+    @staticmethod
+    def _stuck(node: wavelink.Node) -> bool:
+        """True when the node claims to be connected but its websocket is gone.
+
+        wavelink 3.5.2's websocket reader crashes on a close frame from Lavalink (e.g. a restart)
+        instead of reconnecting, leaving the node "connected" forever. wavelink has no public handle
+        on the websocket, hence the private attribute.
+        """
+        websocket = getattr(node, "_websocket", None)
+        return node.status is wavelink.NodeStatus.CONNECTED and (websocket is None or not websocket.is_connected())
+
+    async def _reset_node(self, node: wavelink.Node) -> None:
+        log.warning("Lost the websocket connection to Lavalink, reconnecting")
+        for player in node.players.values():
+            if isinstance(player, BlepPlayer):
+                await self._announce(player, status_embed(
+                    "I lost the connection to the music server, use `play` to start again",
+                    color=Colors.WARN, emoji=Emojis.WARN,
+                ))
+        try:
+            await node.close()  # disconnects players and marks the node disconnected so it gets reconnected
+        except Exception:
+            log.exception("Failed to close the Lavalink node")
+
     async def _supervise_node(self) -> None:
         """Connect to Lavalink, retrying with a backoff, and reconnect whenever the node is lost."""
         await self.bot.wait_until_ready()
@@ -369,7 +393,11 @@ class Music(commands.Cog):
             node = wavelink.Pool.nodes.get(NODE_ID)
             if node is not None and node.status is not wavelink.NodeStatus.DISCONNECTED:
                 delay = 5.0
-                await asyncio.sleep(30)
+                await asyncio.sleep(15)
+                if self._stuck(node):
+                    await asyncio.sleep(5)  # give wavelink's own reconnect a chance to start
+                    if self._stuck(node):
+                        await self._reset_node(node)
                 continue
             problem = await self._probe()
             if problem is None:

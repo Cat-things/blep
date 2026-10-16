@@ -57,7 +57,7 @@ def emoji_key(emoji: str | discord.PartialEmoji) -> str:
         emoji = discord.PartialEmoji.from_str(emoji)
     if emoji.id:
         return str(emoji.id)
-    return (emoji.name or "").replace("️", "")
+    return (emoji.name or "").replace("\ufe0f", "")
 
 
 class MessageLink(NamedTuple):
@@ -392,10 +392,10 @@ class Roles(commands.Cog):
                 view.add_item(add)
             except ValueError:
                 raise UserError(f"That message already has the maximum of **{MAX_BUTTONS}** buttons") from None
-        try:
-            await message.edit(view=view)
-        finally:
-            view.stop()  # the dynamic items handle clicks, don't keep this view around
+        # Stop the view *before* sending so discord.py never stores it: the dynamic items already
+        # handle every click, and removing a stored view later would unregister them globally.
+        view.stop()
+        await message.edit(view=view)
 
     @buttonrole.command(
         name="add",
