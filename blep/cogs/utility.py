@@ -1040,10 +1040,10 @@ class Utility(commands.Cog):
         embed = discord.Embed(color=Colors.BRAND, title="⏰ Reminder", description=row["content"][:4000],
                               timestamp=row["created_at"])
         if row["guild_id"] and row["message_id"]:
+            link = f"https://discord.com/channels/{row['guild_id']}/{row['channel_id']}/{row['message_id']}"
             embed.add_field(
                 name="Set",
-                value=f"<t:{int(row['created_at'].timestamp())}:R> • "
-                f"[jump to message](https://discord.com/channels/{row['guild_id']}/{row['channel_id']}/{row['message_id']})",
+                value=f"<t:{int(row['created_at'].timestamp())}:R> • [jump to message]({link})",
             )
         embed.set_footer(text="Reminder set")
         try:
@@ -1067,7 +1067,8 @@ class Utility(commands.Cog):
     async def reminder_loop(self) -> None:
         try:
             rows = await self.bot.db.fetch(
-                "SELECT * FROM utility_reminders WHERE due_at <= NOW() + INTERVAL '45 seconds' ORDER BY due_at LIMIT 500"
+                "SELECT * FROM utility_reminders WHERE due_at <= NOW() + INTERVAL '45 seconds' "
+                "ORDER BY due_at LIMIT 500"
             )
         except (asyncpg.PostgresError, OSError):
             log.exception("Failed to load due reminders")
@@ -1193,10 +1194,12 @@ class Utility(commands.Cog):
             title=f"{weather_emoji(current.get('weatherCode'))} {description} in {place or city}"[:256],
             color=Colors.NEUTRAL,
         )
-        embed.add_field(name="Temperature", value=f"{current.get('temp_C')}°C / {current.get('temp_F')}°F", inline=True)
+        embed.add_field(name="Temperature", value=f"{current.get('temp_C')}°C / {current.get('temp_F')}°F",
+                        inline=True)
         embed.add_field(name="Feels like", value=f"{current.get('FeelsLikeC')}°C / {current.get('FeelsLikeF')}°F",
                         inline=True)
-        embed.add_field(name="High / low", value=f"{today.get('maxtempC')}°C / {today.get('mintempC')}°C", inline=True)
+        embed.add_field(name="High / low", value=f"{today.get('maxtempC')}°C / {today.get('mintempC')}°C",
+                        inline=True)
         embed.add_field(name="Humidity", value=f"{current.get('humidity')}%", inline=True)
         embed.add_field(
             name="Wind",
@@ -1612,8 +1615,11 @@ class Utility(commands.Cog):
         assert guild is not None
         if not guild.stickers:
             raise UserError("This server has no stickers")
-        await ctx.paginate([f"[{s.name}]({s.url}) (`{s.id}`)" for s in guild.stickers],
-                           title=f"Stickers in {guild.name}", footer=f"{len(guild.stickers)}/{guild.sticker_limit} slots")
+        await ctx.paginate(
+            [f"[{s.name}]({s.url}) (`{s.id}`)" for s in guild.stickers],
+            title=f"Stickers in {guild.name}",
+            footer=f"{len(guild.stickers)}/{guild.sticker_limit} slots",
+        )
 
     # ================================================================== small tools
     @commands.command(
@@ -1859,10 +1865,8 @@ class Utility(commands.Cog):
         today = await self._today_for(target.id)
         upcoming = next_birthday(row["month"], row["day"], today)
         whose = "Your" if target == ctx.author else f"{target.mention}'s"
-        await ctx.neutral(
-            f"{whose} birthday is **{format_birthday(row['month'], row['day'])}**, that's {self._until(upcoming, today)}",
-            emoji="🎂",
-        )
+        when = format_birthday(row["month"], row["day"])
+        await ctx.neutral(f"{whose} birthday is **{when}**, that's {self._until(upcoming, today)}", emoji="🎂")
 
     @birthday.command(
         name="set",
@@ -1882,7 +1886,8 @@ class Utility(commands.Cog):
         )
         today = await self._today_for(ctx.author.id)
         upcoming = next_birthday(month, day, today)
-        await ctx.approve(f"Set your birthday to **{format_birthday(month, day)}**, that's {self._until(upcoming, today)}")
+        when = format_birthday(month, day)
+        await ctx.approve(f"Set your birthday to **{when}**, that's {self._until(upcoming, today)}")
 
     @birthday.command(name="remove", aliases=["reset", "unset", "delete"], help="Remove your birthday")
     async def birthday_remove(self, ctx: Context) -> None:
@@ -1927,7 +1932,9 @@ class Utility(commands.Cog):
     @commands.cooldown(1, 15, commands.BucketType.user)
     async def chatgpt(self, ctx: Context, *, question: str) -> None:
         if not config.OPENAI_API_KEY:
-            raise UserError("ChatGPT isn't set up on this instance of Blep, the bot owner needs to set `OPENAI_API_KEY`")
+            raise UserError(
+                "ChatGPT isn't set up on this instance of Blep, the bot owner needs to set `OPENAI_API_KEY`"
+            )
         payload = {
             "model": config.OPENAI_MODEL,
             "messages": [

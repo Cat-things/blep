@@ -81,7 +81,9 @@ def asset_links(asset: discord.Asset, *, static_only: bool = False) -> str:
     formats = ["png", "jpg", "webp"]
     if asset.is_animated():
         formats.append("gif")
-    return " • ".join(f"[{fmt.upper()}]({asset.replace(format=fmt, size=4096).url})" for fmt in formats)  # type: ignore[arg-type]
+    return " • ".join(
+        f"[{fmt.upper()}]({asset.replace(format=fmt, size=4096).url})" for fmt in formats  # type: ignore[arg-type]
+    )
 
 
 def large(asset: discord.Asset) -> str:
@@ -100,7 +102,8 @@ def links_view() -> discord.ui.View:
 def join_position(member: discord.Member) -> int | None:
     if member.joined_at is None:
         return None
-    ordered = sorted((m for m in member.guild.members if m.joined_at), key=lambda m: m.joined_at)  # type: ignore[arg-type, return-value]
+    joined = [m for m in member.guild.members if m.joined_at is not None]
+    ordered = sorted(joined, key=lambda m: m.joined_at)  # type: ignore[arg-type, return-value]
     for position, other in enumerate(ordered, start=1):
         if other.id == member.id:
             return position
@@ -154,7 +157,9 @@ class Information(commands.Cog):
         rest = (time.perf_counter() - started) * 1000
         await message.edit(embed=self._embed(ctx, f"websocket: `{self._latency_ms()}` • rest: `{rest:.0f}ms`"))
 
-    @commands.command(name="botinfo", aliases=["bi", "about", "info"], help="View information and statistics about Blep")
+    @commands.command(
+        name="botinfo", aliases=["bi", "about", "info"], help="View information and statistics about Blep"
+    )
     async def botinfo(self, ctx: Context) -> None:
         bot = self.bot
         assert bot.user is not None
@@ -202,8 +207,8 @@ class Information(commands.Cog):
     @commands.command(name="uptime", help="View how long Blep has been online")
     async def uptime(self, ctx: Context) -> None:
         delta = datetime.now(timezone.utc) - self.bot.started_at
-        await ctx.neutral(f"I've been online for **{human_delta(delta)}** (since {timestamp(self.bot.started_at, 'f')})",
-                          emoji="⏰")
+        since = timestamp(self.bot.started_at, "f")
+        await ctx.neutral(f"I've been online for **{human_delta(delta)}** (since {since})", emoji="⏰")
 
     # ------------------------------------------------------------------ avatars & banners
     @commands.command(
@@ -475,7 +480,9 @@ class Information(commands.Cog):
         if role.permissions.administrator:
             perms = "Administrator (every permission)"
         else:
-            perms = ", ".join(p.replace("_", " ").title() for p in KEY_PERMISSIONS if getattr(role.permissions, p, False))
+            perms = ", ".join(
+                p.replace("_", " ").title() for p in KEY_PERMISSIONS if getattr(role.permissions, p, False)
+            )
         embed.add_field(name="Key permissions", value=perms or "none", inline=False)
         await ctx.send(embed=embed)
 
@@ -487,7 +494,9 @@ class Information(commands.Cog):
         extras={"example": "#general"},
     )
     @commands.guild_only()
-    async def channelinfo(self, ctx: Context, *, channel: discord.abc.GuildChannel | discord.Thread | None = None) -> None:
+    async def channelinfo(
+        self, ctx: Context, *, channel: discord.abc.GuildChannel | discord.Thread | None = None
+    ) -> None:
         target = channel or ctx.channel
         assert isinstance(target, (discord.abc.GuildChannel, discord.Thread))
         embed = discord.Embed(title=f"#{target.name}", color=Colors.NEUTRAL)
@@ -571,7 +580,9 @@ class Information(commands.Cog):
         assert guild is not None
         if not guild.emojis:
             raise UserError("This server has no emojis")
-        await ctx.paginate([f"{e} [`{e.name}`]({e.url}) (`{e.id}`)" for e in guild.emojis], title=f"Emojis in {guild.name}")
+        await ctx.paginate(
+            [f"{e} [`{e.name}`]({e.url}) (`{e.id}`)" for e in guild.emojis], title=f"Emojis in {guild.name}"
+        )
 
     @commands.command(name="bots", help="View every bot in this server")
     @commands.guild_only()
